@@ -1,0 +1,39 @@
+
+.chart rect {
+    fill: steelblue;
+  }
+  
+  .chart text {
+    fill: white;
+    font: 10px sans-serif;
+    text-anchor: end;
+  }
+
+
+  #map {
+    width: 100%;
+    height: 700px;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .attacks, .attacks svg {
+    position: absolute;
+  }
+  
+  .attacks svg {
+    /* width: 40px; */
+    /* height: 40px; */
+    /*padding-right: 100px;*/
+    font: 10px Arial;
+    font-weight: 900
+  }
+  
+  .attacks circle {
+    fill: black;
+    /* stroke: black; */
+    /* stroke-width: 1px; */
+  }
+
+
+  
