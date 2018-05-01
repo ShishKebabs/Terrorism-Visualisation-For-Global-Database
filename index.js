@@ -1,23 +1,35 @@
 let map = undefined;
 var overlay = undefined;
+let yearFilter = undefined;
+let isPlayBtn = true;
+let timer = undefined;
+let isDrawn = true;
+let updateFrequency = 6;
+let sec = 0;
+let terror = undefined;
+let years = {}
+const years_original = {}
 
 function initMap() {
     const latlng = { lat: 51.5074, lng: 0.1278 };
     map = new google.maps.Map(d3.select("#map").node(), {
         zoom: 4,
         center: latlng,
-        //mapTypeId: google.maps.MapTypeId.SATELLITE 
     });
 
     map.addListener('zoom_changed', function () {
-        //loadData();
-        addMarkers(yearFilter);
+        updateCoords(years);
         console.log("zoom changed")
     });
 }
 
-
-
+function disableMap(disable) {
+    map != null ? map.setOptions({
+        draggable: !disable, zoomControl: !disable,
+        scrollwheel: !disable, disableDoubleClickZoom: disable
+    })
+        : console.log("map not created");
+}
 
 /* function createGoogleMapPointer(lat, lng) {
     var myLatLng = { lat, lng };
@@ -28,104 +40,18 @@ function initMap() {
     });
 } */
 
-let terrorism = undefined;
-d3.csv("/data/terrorism.csv", function (error, data) {
-    if (error) throw error;
-    terrorism = data;
-    loadData();
-});
 
-const years = {}
-
-
-// function updateCoords() {
-//     let zoomlevel = map.getZoom();
-
-//     years.forEach(y => {
-
-//         const coords = years[y];
-
-//         coords.forEach(c => {
-//             //zoomlevel > 2 ? zoomlevel = 2 : zoomlevel;
-//             //zoomlevel < 0 ? zoomlevel = 0 : zoomlevel;
-
-//             //console.log(zoomlevel);
-//             cl_lat2 -= cl_lat % zoomlevel
-//             cl_lng2 -= cl_lng % zoomlevel
-//             const cl_coord = cl_lat + "," + cl_lng
-//             coords[cl_coord] = {cl_lat = cl_lat2, cl_lng = cl_lng2}
-//         });
-//     })
-
-
-// }
-
-function loadData() {
-    console.log(terrorism);
-    terrorism.forEach(d => {
-        const { iyear, country, city, latitude, longitude } = d;
-
-        if (!latitude || !longitude || !iyear) {
-            return;
-        }
-
-        if (years[iyear] == undefined) {
-            years[iyear] = {}
-        }
-
-        const coords = years[iyear];
-
-        let cl_lat = parseFloat(latitude).toFixed(0)
-        //cl_lat -= cl_lat % 1
-        let cl_lng = parseFloat(longitude).toFixed(0)
-        //cl_lng -= cl_lng % 1
-        const cl_coord = cl_lat + "," + cl_lng
-
-        if (coords[cl_coord] === undefined) {
-            coords[cl_coord] = { cl_lat, cl_lng, count: 0 }
-        }
-
-        const coord = coords[cl_coord];
-
-        coord.count += 1;
-    });
-}
-
-
-
-
-let yearFilter = undefined;
-let timer = undefined;
-let isDrawn = true;
-let updateFrequency = 3;
-let sec = 0;
-function myTimer() {
-    if (isDrawn) {
-        if (sec >= updateFrequency) {
-            sec = 0;
-            if (yearFilter > $("#yearSlider").prop('max')) {
-                yearFilter = $("#yearSlider").prop('min');
-            }
-            $("#yearSlider").val(yearFilter);
-            addMarkers(yearFilter);
-            yearFilter++;
-        }
-        sec++;
-    }
-}
-
-let isPlayBtn = true;
 $(document).ready(() => {
     yearFilter = $("#yearSlider").prop('min');
     $("#yearSlider").val(yearFilter);
     $("#yearSlider").change(e => {
         yearFilter = e.target.value;
-        addMarkers(yearFilter);
+        addMarkers();
         console.log(yearFilter);
     });
     $("#playPause").click(() => {
         if (isPlayBtn) {
-            timer = setInterval(myTimer, 100);
+            timer = setInterval(myTimer, 500);
             isPlayBtn = false;
         } else {
             timer = clearInterval(timer);
@@ -134,30 +60,113 @@ $(document).ready(() => {
     });
     $("#fastForward").click(() => {
         if (updateFrequency > 1) {
-            updateFrequency--;
+            updateFrequency -= 0.5;
         }
     });
     $("#slowDown").click(() => {
-        if (updateFrequency < 360) {
-            updateFrequency++;
+        if (updateFrequency < 60) {
+            updateFrequency += 0.5;
         }
     });
 })
 
 
+function myTimer() {
+    if (isDrawn) {
+        if (sec >= updateFrequency) {
+            sec = 0;
+            if (yearFilter > $("#yearSlider").prop('max')) {
+                yearFilter = $("#yearSlider").prop('min');
+            }
+            $("#yearSlider").val(yearFilter);
+            addMarkers();
+            yearFilter++;
+        }
+        sec++;
+    }
+}
+
+d3.csv("/data/terrorism.csv", function (error, data) {
+    if (error) throw error;
+    terror = data;
+    loadData();
+});
 
 
 
-function disableMap(disable) {
-    map != null ? map.setOptions({
-        draggable: !disable, zoomControl: !disable,
-        scrollwheel: !disable, disableDoubleClickZoom: disable
+
+//shift alt f 
+function updateCoords(input) {
+    let zoomlevel = map.getZoom();
+
+    var coords = input[yearFilter];
+    console.log(coords);
+    x = (Object.keys(coords).slice(1, 5))
+    x.forEach(coord => {
+        //let { coord_lat, coord_lng, count } = c;
+        //zoomlevel > 2 ? zoomlevel = 2 : zoomlevel;
+        //zoomlevel < 0 ? zoomlevel = 0 : zoomlevel;
+        coords[coord].coord_lng = coords[coord].coord_lng - 1          //c.coord_lat % 3
+        coords[coord].coord_lat = coords[coord].coord_lng - 1              //c.coord_lng % 3
+        //console.log(c)
+
+        //coords[c].coord_lat 
+        // const search_coord_string = coord_lat + "," + coord_lng
+
+        //if (coords[search_coord_string] === undefined) {
+        //   coords[search_coord_string] = { coord_lat, coord_lng, count: 0 }
+        // }
+        // coords[search_coord_string].count += 1;
+    
+
+    //  addMarkers(yearFilter)
+
     })
-        : console.log("map not created");
+
+    console.log(coords);
+    
+
+
+}
+
+function loadData() {
+    //console.log(terror);
+    terror.forEach(d => {
+        const { iyear, country, city, latitude, longitude } = d;
+
+        //data filtering 
+        if (!latitude || !longitude || !iyear) {
+            return;
+        }
+
+        if (years_original[iyear] == undefined) {
+            years_original[iyear] = {}
+        }
+
+        const coords = years_original[iyear];
+
+        let coord_lat = parseFloat(latitude).toFixed(0)
+        let coord_lng = parseFloat(longitude).toFixed(0)
+
+        /////////////////////////////////////////////////////////
+        //  coord_lat -= coord_lat % 3
+        //  coord_lng -= coord_lng % 3
+        /////////////////////////////////////////////////////////
+
+
+        const search_coord_string = coord_lat + "," + coord_lng
+
+        if (coords[search_coord_string] === undefined) {
+            coords[search_coord_string] = { coord_lat, coord_lng, count: 0 }
+        }
+        coords[search_coord_string].count += 1;
+    });
+    years = years_original
+    addMarkers()
 }
 
 
-function addMarkers(yearFilter) {
+function addMarkers() {
     isDrawn = false;
     //disableMap(true);
     if (overlay != null) {
@@ -170,7 +179,7 @@ function addMarkers(yearFilter) {
     const coords = years[yearFilter]
 
     if (coords == undefined) {
-        console.log("Coords for year ", yearFilter, "undefined")
+        //console.log("Coords for year ", yearFilter, "undefined")
         isDrawn = true;
         return;
     }
@@ -180,9 +189,9 @@ function addMarkers(yearFilter) {
         data.push(d)
     })
 
-    data.sort((a,b) => a.count - b.count )
+    data.sort((a, b) => a.count - b.count)
 
-    console.log(yearFilter, data.length, "data length")
+    //console.log(yearFilter, data.length, "data length")
 
     // Add the container when the overlay is added to the map.
     overlay.onAdd = function () {
@@ -194,23 +203,13 @@ function addMarkers(yearFilter) {
         overlay.draw = function () {
             var projection = this.getProjection();
 
-            const padding = (d) => {
+            const node_padding = (d) => {
                 let val = d.value.count
-
                 val = Math.log2(val) * 2;
-
                 if (val > 20) val = 20;
                 if (val < 8) val = 8;
-
                 return val;
             }
-
-            var marker = layer.selectAll("svg")
-                .data(d3.entries(data))
-                .each(transform) // update existing markers
-                .enter().append("svg")
-                .each(transform)
-            // .attr("class", "marker");
 
             color = d3.rgb(255, 80, 80);
             ncolor = d => {
@@ -218,56 +217,45 @@ function addMarkers(yearFilter) {
                 return d3.hsl(color).darker(x);
             };
 
+            var marker = layer.selectAll("svg")
+                .data(d3.entries(data))
+                .each(transform) // update existing markers
+                .enter().append("svg")
+                .each(transform)
 
             // Add a circle.
             marker.append("circle")
-                .attr("r", padding)
-                .attr("cx", padding)
-                .attr("cy", padding)
+                .attr("r", node_padding)
+                .attr("cx", node_padding)
+                .attr("cy", node_padding)
                 .style('fill', ncolor);
-
-
             // Add a label.
             marker.append("text")
                 .attr("text-anchor", "middle")
-                .attr("x", padding)
-                .attr("y", padding)
+                .attr("x", node_padding)
+                .attr("y", node_padding)
                 .attr("dy", ".31em")
                 .attr("fill", "white")
                 .text(function (d) { return d.value.count; });
-
             function transform(d) {
-                let lat = d.value.cl_lat;
-                let lang = d.value.cl_lng;
-
-                let zoomlevel = map.getZoom();
-                console.log(zoomlevel)
-                if(map.getZoom <= 3) {
-                    lat -= lat % zoomlevel*2;
-                    lang -= lang % zoomlevel*2;                
+                let lat = d.value.coord_lat;
+                let lang = d.value.coord_lng;
+                if (map.getZoom <= 3) {
+                    lat -= lat % zoomlevel * 2;
+                    lang -= lang % zoomlevel * 2;
                 }
-
-
-
-
                 const latlng = new google.maps.LatLng(lat, lang);
-
                 const pnt = projection.fromLatLngToDivPixel(latlng);
-
-
                 return d3.select(this)
-                    .style("left", (pnt.x - padding(d)) + "px")
-                    .style("top", (pnt.y - padding(d)) + "px");
+                    .style("left", (pnt.x - node_padding(d)) + "px")
+                    .style("top", (pnt.y - node_padding(d)) + "px");
             }
         };
-
         overlay.onRemove = function () {
             layer.selectAll("svg").remove();
         }
     };
-
-    // Bind our overlay to the map…
-    overlay.setMap(map);
+    overlay.setMap(map);     // Bind our overlay to the map…
     //disableMap(false);
     isDrawn = true;
 }
