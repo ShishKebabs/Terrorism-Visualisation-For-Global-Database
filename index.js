@@ -29,7 +29,7 @@ function initMap() {
 } */
 
 let terrorism = undefined;
-d3.csv("terrorism.csv", function (error, data) {
+d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
     terrorism = data;
     loadData();
