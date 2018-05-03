@@ -8,7 +8,6 @@ let updateFrequency = 6;
 let sec = 0;
 let terror = undefined;
 let currentGMapZoom = 5;
-let cluster = 5;
 
 /* function createGoogleMapPointer(lat, lng) {
     var myLatLng = { lat, lng };
@@ -33,8 +32,6 @@ function initMap() {
     map.addListener('zoom_changed', function () {
         //updateCoords(years);
         console.log("zoom changed")
-        map.getZoom() > currentGMapZoom ? cluster-- : cluster
-        map.getZoom() < currentGMapZoom ? cluster++ : cluster
         currentGMapZoom = map.getZoom();
         //loadData();
         addMarkers(currentGMapZoom);
@@ -152,37 +149,44 @@ function loadData() {
             coord_lat -= offset_lat
             coord_lng -= offset_lng
 
-            d.latitude = coord_lat
-            d.longitude = coord_lng
+            //d.latitude = coord_lat
+            //d.longitude = coord_lng
             
 
             const coords = years[iyear];
 
-
+            //bin
             const search_coord_string = coord_lat + "," + coord_lng
             if (coords[search_coord_string] === undefined) {
                 coords[search_coord_string] = {
                     coord_lat, coord_lng,
-                    offset_lat, offset_lng,
-                     count: 0
+                    latitude, longitude,
+                    count: 0,
                 }
             }
     
             coords[search_coord_string].count += 1;
-
-
         });
-        //console.log(years_per_zoom)
         years_per_zoom[i] = years
-        //console.log( years_per_zoom[i])
-        //console.log("offsetlat "+ offset_lat + "  offsetlang "+ offset_lng +"  zoom " + currentGMapZoom + " my zoom = " + cluster)
         if (i <= 7) {
-            console.log(cluster + " " + i)
             cluster+=1;
+            if(i <= 4) {
+                cluster+=9;
+            }
         }
-
     }
-    console.log(data_per_zoom)
+
+    years_per_zoom.forEach(years => {
+        for (iyear in years) {
+            const year = years[iyear]
+            for (ipoint in year) {
+                const point = year[ipoint];
+                point.coord_lat = point.latitude
+                point.coord_lng = point.longitude        
+            }
+        }
+    })
+    console.log(years_per_zoom)
 }
 
 
@@ -197,7 +201,6 @@ function addMarkers(zoomlevel) {
     data = []
 
     const coords2 = years_per_zoom[zoomlevel]
-    console.log(years_per_zoom[1])
     const coords = coords2[yearFilter]
 
     if (coords == undefined) {
@@ -259,8 +262,8 @@ function addMarkers(zoomlevel) {
                 .text(function (d) { return d.value.count; });
 
             function transform(d) {
-                let lat = parseFloat(d.value.coord_lat) //+ d.value.offset_lat;
-                let lang = parseFloat(d.value.coord_lng) //+ d.value.offset_lng;
+                let lat = parseFloat(d.value.coord_lat)
+                let lang = parseFloat(d.value.coord_lng)
                 const latlng = new google.maps.LatLng(lat, lang);
                 const pnt = projection.fromLatLngToDivPixel(latlng);
                 return d3.select(this)
