@@ -8,28 +8,9 @@ let updateFrequency = 6;
 let sec = 0;
 let terror = undefined;
 let years = {}
-const years_original = {}
-
-function initMap() {
-    const latlng = { lat: 51.5074, lng: 0.1278 };
-    map = new google.maps.Map(d3.select("#map").node(), {
-        zoom: 4,
-        center: latlng,
-    });
-
-    map.addListener('zoom_changed', function () {
-        updateCoords(years);
-        console.log("zoom changed")
-    });
-}
-
-function disableMap(disable) {
-    map != null ? map.setOptions({
-        draggable: !disable, zoomControl: !disable,
-        scrollwheel: !disable, disableDoubleClickZoom: disable
-    })
-        : console.log("map not created");
-}
+let years_original = {}
+let currentGMapZoom = 5;
+let cluster = 5;
 
 /* function createGoogleMapPointer(lat, lng) {
     var myLatLng = { lat, lng };
@@ -39,6 +20,45 @@ function disableMap(disable) {
         title: 'Hello World!'
     });
 } */
+d3.csv("/data/terrorism.csv", function (error, data) {
+    if (error) throw error;
+    terror = data;
+    loadData();
+});
+function initMap() {
+    const latlng = { lat: 51.5074, lng: 0.1278 };
+    map = new google.maps.Map(d3.select("#map").node(), {
+        zoom: 4,
+        center: latlng,
+    });
+    currentGMapZoom = map.getZoom();
+    map.addListener('zoom_changed', function () {
+        //updateCoords(years);
+        console.log("zoom changed")
+        map.getZoom() > currentGMapZoom ? cluster-- : cluster
+        map.getZoom() < currentGMapZoom ? cluster++ : cluster
+        currentGMapZoom = map.getZoom();
+        loadData();
+    });
+    google.maps.event.addListener(map, 'bounds_changed', function () {
+        var bounds = map.getBounds();
+        var ne = bounds.getNorthEast();
+        var sw = bounds.getSouthWest();
+        console.log(ne.lat());
+        console.log(ne.lng());
+        console.log(sw.lat());
+        console.log(sw.lng());
+    });
+
+}
+
+function disableMap(disable) {
+    map != null ? map.setOptions({
+        draggable: !disable, zoomControl: !disable,
+        scrollwheel: !disable, disableDoubleClickZoom: disable
+    })
+        : console.log("map not created");
+}
 
 
 $(document).ready(() => {
@@ -86,51 +106,65 @@ function myTimer() {
     }
 }
 
-d3.csv("/data/terrorism.csv", function (error, data) {
-    if (error) throw error;
-    terror = data;
-    loadData();
-});
 
-
-
-
-//shift alt f 
-function updateCoords(input) {
-    let zoomlevel = map.getZoom();
-
-    var coords = input[yearFilter];
-    console.log(coords);
-    x = (Object.keys(coords).slice(1, 5))
-    x.forEach(coord => {
-        //let { coord_lat, coord_lng, count } = c;
-        //zoomlevel > 2 ? zoomlevel = 2 : zoomlevel;
-        //zoomlevel < 0 ? zoomlevel = 0 : zoomlevel;
-        coords[coord].coord_lng = coords[coord].coord_lng - 1          //c.coord_lat % 3
-        coords[coord].coord_lat = coords[coord].coord_lng - 1              //c.coord_lng % 3
-        //console.log(c)
-
-        //coords[c].coord_lat 
-        // const search_coord_string = coord_lat + "," + coord_lng
-
-        //if (coords[search_coord_string] === undefined) {
-        //   coords[search_coord_string] = { coord_lat, coord_lng, count: 0 }
-        // }
-        // coords[search_coord_string].count += 1;
-    
-
-    //  addMarkers(yearFilter)
-
-    })
-
-    console.log(coords);
-    
-
-
-}
+let data_per_zoom = []
 
 function loadData() {
-    //console.log(terror);
+    years_original = {}
+    data_per_zoom = []
+    max_zoom = 40;
+
+
+    for (i = max_zoom; i >= 0; i--) {
+        data_per_zoom[i] = terror
+        cluster = 1;
+        data_per_zoom[i].forEach(d => {
+            const { iyear, country, city, latitude, longitude } = d;
+    
+            //data filtering 
+            if (!latitude || !longitude || !iyear) {
+                return;
+            }
+    
+            if (years_original[iyear] == undefined) {
+                years_original[iyear] = {}
+            }
+    
+            let coord_lat = parseFloat(latitude).toFixed(1) //change to 1 when doesnt lag
+            let coord_lng = parseFloat(longitude).toFixed(1)
+    
+
+            if (data_per_zoom[i] >= 8) {
+                offset_lat = 0;
+                offset_lng = 0;
+            } else {
+                offset_lat = (coord_lat % cluster);
+                offset_lng = (coord_lng % cluster);
+                cluster+=1;
+            }
+            coord_lat -= offset_lat
+            coord_lng -= offset_lng
+
+            const coords =  data_per_zoom[i];
+            const search_coord_string = coord_lat + "," + coord_lng
+            if (coords[search_coord_string] === undefined) {
+                coords[search_coord_string] = {
+                    coord_lat, coord_lng,
+                    offset_lat, offset_lng,
+                    actual_lat: latitude, actual_lng: longitude
+                    , count: 0
+                }
+            }
+            coords[search_coord_string].count += 1;
+        });
+        //console.log("offsetlat "+ offset_lat + "  offsetlang "+ offset_lng +"  zoom " + currentGMapZoom + " my zoom = " + cluster)
+        //years = years_original
+        //addMarkers();
+    }
+    
+
+
+/*
     terror.forEach(d => {
         const { iyear, country, city, latitude, longitude } = d;
 
@@ -145,24 +179,36 @@ function loadData() {
 
         const coords = years_original[iyear];
 
-        let coord_lat = parseFloat(latitude).toFixed(0)
-        let coord_lng = parseFloat(longitude).toFixed(0)
+        // if time do this distance checking instead: d = sqrt( (x2-x1)^2 + (y2-y1)^2 )
 
-        /////////////////////////////////////////////////////////
-        //  coord_lat -= coord_lat % 3
-        //  coord_lng -= coord_lng % 3
-        /////////////////////////////////////////////////////////
+        let coord_lat = parseFloat(latitude).toFixed(2) //change to 1 when doesnt lag
+        let coord_lng = parseFloat(longitude).toFixed(2)
 
+        if (cluster <= 0) {
+            offset_lat = 0;
+            offset_lng = 0;
+        } else {
+            offset_lat = (coord_lat % cluster);
+            offset_lng = (coord_lng % cluster);
+        }
+        coord_lat -= offset_lat
+        coord_lng -= offset_lng
 
         const search_coord_string = coord_lat + "," + coord_lng
-
         if (coords[search_coord_string] === undefined) {
-            coords[search_coord_string] = { coord_lat, coord_lng, count: 0 }
+            coords[search_coord_string] = {
+                coord_lat, coord_lng,
+                offset_lat, offset_lng,
+                actual_lat: latitude, actual_lng: longitude
+                , count: 0
+            }
         }
+
         coords[search_coord_string].count += 1;
     });
+    //console.log("offsetlat "+ offset_lat + "  offsetlang "+ offset_lng +"  zoom " + currentGMapZoom + " my zoom = " + cluster)
     years = years_original
-    addMarkers()
+    //addMarkers();*/
 }
 
 
@@ -179,7 +225,6 @@ function addMarkers() {
     const coords = years[yearFilter]
 
     if (coords == undefined) {
-        //console.log("Coords for year ", yearFilter, "undefined")
         isDrawn = true;
         return;
     }
@@ -206,7 +251,7 @@ function addMarkers() {
             const node_padding = (d) => {
                 let val = d.value.count
                 val = Math.log2(val) * 2;
-                if (val > 20) val = 20;
+                if (val > 17) val = 17;
                 if (val < 8) val = 8;
                 return val;
             }
@@ -222,7 +267,6 @@ function addMarkers() {
                 .each(transform) // update existing markers
                 .enter().append("svg")
                 .each(transform)
-
             // Add a circle.
             marker.append("circle")
                 .attr("r", node_padding)
@@ -237,13 +281,10 @@ function addMarkers() {
                 .attr("dy", ".31em")
                 .attr("fill", "white")
                 .text(function (d) { return d.value.count; });
+
             function transform(d) {
-                let lat = d.value.coord_lat;
-                let lang = d.value.coord_lng;
-                if (map.getZoom <= 3) {
-                    lat -= lat % zoomlevel * 2;
-                    lang -= lang % zoomlevel * 2;
-                }
+                let lat = parseFloat(d.value.coord_lat) + d.value.offset_lat;
+                let lang = parseFloat(d.value.coord_lng) + d.value.offset_lng;
                 const latlng = new google.maps.LatLng(lat, lang);
                 const pnt = projection.fromLatLngToDivPixel(latlng);
                 return d3.select(this)

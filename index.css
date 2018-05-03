@@ -22,9 +22,8 @@
   }
   
   .attacks svg {
-    /* width: 40px; */
-    /* height: 40px; */
-    /*padding-right: 100px;*/
+    width: 40px;
+    height: 40px;
     font: 10px Arial;
     font-weight: 900
   }
