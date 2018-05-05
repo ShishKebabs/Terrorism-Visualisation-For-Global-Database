@@ -9,6 +9,14 @@ let sec = 0;
 let terror = undefined;
 let currentGMapZoom = 5;
 
+
+/* 
+
+In Add markers, only push variables to data which fall within the camera coordinates
+
+
+*/
+
 /* function createGoogleMapPointer(lat, lng) {
     var myLatLng = { lat, lng };
     var marker = new google.maps.Marker({
@@ -22,6 +30,9 @@ d3.csv("/data/terrorism.csv", function (error, data) {
     terror = data;
     loadData();
 });
+
+camera_bounds = 0
+
 function initMap() {
     const latlng = { lat: 51.5074, lng: 0.1278 };
     map = new google.maps.Map(d3.select("#map").node(), {
@@ -36,10 +47,15 @@ function initMap() {
         //loadData();
         addMarkers(currentGMapZoom);
     });
+
+
     google.maps.event.addListener(map, 'bounds_changed', function () {
-        var bounds = map.getBounds();
-        var ne = bounds.getNorthEast();
-        var sw = bounds.getSouthWest();
+        camera_bounds = map.getBounds();
+        var ne = camera_bounds.getNorthEast();
+        var sw = camera_bounds.getSouthWest();
+
+        //console.log(camera_bounds)
+        addMarkers(currentGMapZoom)
         //console.log(ne.lat());
        // console.log(ne.lng());
        // console.log(sw.lat());
@@ -107,7 +123,7 @@ function myTimer() {
 const data_per_zoom = []
 const terrorFiltered = []
 const years_per_zoom = []
-
+let dataLoaded = false;
 function loadData() {
 
     terror.forEach(d => {
@@ -149,8 +165,8 @@ function loadData() {
             coord_lat -= offset_lat
             coord_lng -= offset_lng
 
-            //d.latitude = coord_lat
-            //d.longitude = coord_lng
+            d.latitude = coord_lat
+            d.longitude = coord_lng
             
 
             const coords = years[iyear];
@@ -187,15 +203,21 @@ function loadData() {
         }
     })
     console.log(years_per_zoom)
+
+    dataLoaded = true;
 }
 
 
-function addMarkers(zoomlevel) {
+function addMarkers(zoomlevel, bounds) {
     isDrawn = false;
     //disableMap(true);
     if (overlay != null) {
         overlay.setMap(null);
     }
+    if(!dataLoaded) {
+        return;
+    }
+
     overlay = new google.maps.OverlayView();
 
     data = []
@@ -204,13 +226,18 @@ function addMarkers(zoomlevel) {
     const coords = coords2[yearFilter]
 
     if (coords == undefined) {
-        isDrawn = true;
+        //isDrawn = true;
         return;
     }
 
     Object.keys(coords).forEach(coord => {
         const d = coords[coord]
-        data.push(d)
+        const latlng = new google.maps.LatLng(d.latitude, d.longitude);
+        //var center = camera_bounds.getCenter();  // (55.04334815163844, -1.9917653831249726)
+        //console.log(coord)
+        if(camera_bounds.contains(latlng)) {
+            data.push(d)
+        }
     })
 
     data.sort((a, b) => a.count - b.count)
