@@ -36,6 +36,7 @@ d3.csv("/data/terrorism.csv", function (error, data) {
 });
 
 camera_bounds = 0
+current_centre = 0;
 
 function initMap() {
     const latlng = { lat: 51.5074, lng: 0.1278 };
@@ -43,37 +44,77 @@ function initMap() {
         zoom: 4,
         center: latlng,
     });
-    currentGMapZoom = map.getZoom();
-    map.addListener('zoom_changed', function () {
+
+
+
+    google.maps.event.addListenerOnce(map, 'idle', function () {
         currentGMapZoom = map.getZoom();
-        //console.log(currentGMapZoom)
-
-        window.clearTimeout(zoom_check_time);
-        zoom_check_time = window.setTimeout(function () {
-            addMarkers(currentGMapZoom);
-        }, 200);
-    });
-
-
-    google.maps.event.addListener(map, 'bounds_changed', function () {
-
         camera_bounds = map.getBounds();
-        //var ne = camera_bounds.getNorthEast();
-        //var sw = camera_bounds.getSouthWest();
-        //console.log(ne.lat());
-        // console.log(ne.lng());
-        // console.log(sw.lat());
-        // console.log(sw.lng());
-        //console.log(camera_bounds)
+        current_centre = camera_bounds.getCenter();
 
 
-        window.clearTimeout(bounds_check_time);
-        bounds_check_time = window.setTimeout(function () {
-            addMarkers(currentGMapZoom)
-        }, 100);
+        google.maps.event.addListener(map, 'bounds_changed', function () {
+
+             new_camera_bounds = map.getBounds();
+             new_centre = new_camera_bounds.getCenter();
+             new_lat = new_centre.lat();
+             new_lng = new_centre.lng();
+             current_lat = current_centre.lat();
+             current_lng = current_centre.lng();
+    
+            //console.log(new_centre)
+            //console.log(new_lat)
+            //console.log(new_lng)
+            //console.log(current_lat)
+    
+            if (new_lat > current_lat + 3 || new_lat < current_lat - 3
+                || new_lng > current_lng + 3 || new_lng < current_lng - 3) {
+                    console.log(true)
+                current_centre = new_centre;
+                camera_bounds = new_camera_bounds;
+                addMarkers(currentGMapZoom)
+
+                //}
+                //var ne = camera_bounds.getNorthEast();
+                //var sw = camera_bounds.getSouthWest();
+                //console.log(ne.lat());
+                // console.log(ne.lng());
+                // console.log(sw.lat());
+                // console.log(sw.lng());
+                //console.log(camera_bounds)
+    
+    
+                //window.clearTimeout(bounds_check_time);
+                //bounds_check_time = window.setTimeout(function () {
+                    //addMarkers(currentGMapZoom)
+                //}, 100);
+         } 
+
+        
+        });
+    
+    
+    
+    
+        
+    
+         google.maps.event.addListener(map, 'zoom_changed', function () {
+            currentGMapZoom = map.getZoom();
+            //console.log(currentGMapZoom)
+    
+            window.clearTimeout(zoom_check_time);
+            zoom_check_time = window.setTimeout(function () {
+                addMarkers(currentGMapZoom);
+            }, 200);
+        });
+
     });
+    
+
+
 
 }
+
 
 function disableMap(disable) {
     map != null ? map.setOptions({
