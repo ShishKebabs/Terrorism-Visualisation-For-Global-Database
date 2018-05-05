@@ -8,8 +8,8 @@ let updateFrequency = 6;
 let sec = 0;
 let terror = undefined;
 let currentGMapZoom = 5;
-
-
+let bounds_check_time = 0;
+let zoom_check_time = 0;
 /* 
 
 In Add markers, only push variables to data which fall within the camera coordinates
@@ -28,7 +28,11 @@ In Add markers, only push variables to data which fall within the camera coordin
 d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
     terror = data;
-    loadData();
+    if (loadData()) {
+        if (map != null) {
+            addMarkers(currentGMapZoom)
+        }
+    }
 });
 
 camera_bounds = 0
@@ -41,25 +45,32 @@ function initMap() {
     });
     currentGMapZoom = map.getZoom();
     map.addListener('zoom_changed', function () {
-        //updateCoords(years);
-        console.log("zoom changed")
         currentGMapZoom = map.getZoom();
-        //loadData();
-        addMarkers(currentGMapZoom);
+        //console.log(currentGMapZoom)
+
+        window.clearTimeout(zoom_check_time);
+        zoom_check_time = window.setTimeout(function () {
+            addMarkers(currentGMapZoom);
+        }, 200);
     });
 
 
     google.maps.event.addListener(map, 'bounds_changed', function () {
-        camera_bounds = map.getBounds();
-        var ne = camera_bounds.getNorthEast();
-        var sw = camera_bounds.getSouthWest();
 
-        //console.log(camera_bounds)
-        addMarkers(currentGMapZoom)
+        camera_bounds = map.getBounds();
+        //var ne = camera_bounds.getNorthEast();
+        //var sw = camera_bounds.getSouthWest();
         //console.log(ne.lat());
-       // console.log(ne.lng());
-       // console.log(sw.lat());
-       // console.log(sw.lng());
+        // console.log(ne.lng());
+        // console.log(sw.lat());
+        // console.log(sw.lng());
+        //console.log(camera_bounds)
+
+
+        window.clearTimeout(bounds_check_time);
+        bounds_check_time = window.setTimeout(function () {
+            addMarkers(currentGMapZoom)
+        }, 100);
     });
 
 }
@@ -118,7 +129,7 @@ function myTimer() {
     }
 }
 //loop over terror x times
-//each loop store all the
+//each loop store all the different filterings
 
 const data_per_zoom = []
 const terrorFiltered = []
@@ -128,11 +139,11 @@ function loadData() {
 
     terror.forEach(d => {
         const { iyear, country, city, latitude, longitude } = d;
-            //data filtering 
-            if (!latitude || !longitude || !iyear) {
-                return;
-            }
-            terrorFiltered.push(d)
+        //data filtering 
+        if (!latitude || !longitude || !iyear) {
+            return;
+        }
+        terrorFiltered.push(d)
     });
 
     //console.log(terror)
@@ -147,15 +158,15 @@ function loadData() {
         let years = {}
         data_per_zoom[i].forEach(d => {
             const { iyear, country, city, latitude, longitude } = d;
-    
+
             if (years[iyear] == undefined) {
                 years[iyear] = {}
             }
-    
+
             let coord_lat = parseFloat(latitude).toFixed(2) //change to 1 when doesnt lag
             let coord_lng = parseFloat(longitude).toFixed(2)
-    
-            if(cluster > 0) {
+
+            if (cluster > 0) {
                 offset_lat = (coord_lat % cluster);
                 offset_lng = (coord_lng % cluster);
             } else {
@@ -167,7 +178,7 @@ function loadData() {
 
             d.latitude = coord_lat
             d.longitude = coord_lng
-            
+
 
             const coords = years[iyear];
 
@@ -180,14 +191,14 @@ function loadData() {
                     count: 0,
                 }
             }
-    
+
             coords[search_coord_string].count += 1;
         });
         years_per_zoom[i] = years
         if (i <= 7) {
-            cluster+=1;
-            if(i <= 4) {
-                cluster+=9;
+            cluster += 1;
+            if (i <= 4) {
+                cluster += 9;
             }
         }
     }
@@ -198,13 +209,13 @@ function loadData() {
             for (ipoint in year) {
                 const point = year[ipoint];
                 point.coord_lat = point.latitude
-                point.coord_lng = point.longitude        
+                point.coord_lng = point.longitude
             }
         }
     })
     console.log(years_per_zoom)
 
-    dataLoaded = true;
+    return (true);
 }
 
 
@@ -214,19 +225,21 @@ function addMarkers(zoomlevel, bounds) {
     if (overlay != null) {
         overlay.setMap(null);
     }
-    if(!dataLoaded) {
-        return;
-    }
-
     overlay = new google.maps.OverlayView();
 
     data = []
 
+
     const coords2 = years_per_zoom[zoomlevel]
+    if (coords2 == null) {
+        isDrawn = true;
+        return;
+    }
+
     const coords = coords2[yearFilter]
 
     if (coords == undefined) {
-        //isDrawn = true;
+        isDrawn = true;
         return;
     }
 
@@ -235,7 +248,7 @@ function addMarkers(zoomlevel, bounds) {
         const latlng = new google.maps.LatLng(d.latitude, d.longitude);
         //var center = camera_bounds.getCenter();  // (55.04334815163844, -1.9917653831249726)
         //console.log(coord)
-        if(camera_bounds.contains(latlng)) {
+        if (camera_bounds.contains(latlng)) {
             data.push(d)
         }
     })
