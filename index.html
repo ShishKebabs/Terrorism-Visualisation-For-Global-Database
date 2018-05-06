@@ -13,26 +13,30 @@
     integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
     crossorigin="anonymous"></script>
     <script src="index.js"></script>
-    <link rel="stylesheet" type="text/css" href="lib/dt-1.10.16/datatables.css"/>
-    <script type="text/javascript" src="lib/dt-1.10.16/datatables.js"></script>
+    <link rel="stylesheet" type="text/css" href="lib/DataTables/datatables.css"/>
+    <script type="text/javascript" src="lib/DataTables/datatables.js"></script>
     
 </head>
 <body>
-
-
     <div id="year_slider">
         <button id="slowDown" type="button"> << </button>
         <button id="playPause" type="button">Play/Pause</button>
         <button id="fastForward" type="button"> >> </button>
-
         Years
-
     <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
     </div>
-    <div id="map"></div>
 
-    <table id="table">
-            <thead>
+    <div id ="container"> 
+        <div id="map"></div>
+
+    </div>
+    <div id="table_wrapper" style = "position: fixed;left:0;top:0;right:0;bottom:0;pointer-events: none;">
+            <div style = "margin: 10%;height:80%;width:80%;overflow-y:scroll;">
+            <div style ="float: right;">
+                <img src="close_button.png" style = "width: 20px; height: 20px;" onclick="closeTable()"/>
+            </div>
+            <table id="table">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Year</th>
@@ -47,13 +51,21 @@
                         <th>Nationality</th>
                         <th>Group</th>
                     </tr>
-            </thead>
-     </table>
+                </thead>
+            </table>
+            </div>
+        </div>
+
+
+
+
+
+<!--
     <script async>
       //createBar1SVG();
     </script>
     <svg class = "chart"></svg>
-
+-->
 
 </body>
 </html>

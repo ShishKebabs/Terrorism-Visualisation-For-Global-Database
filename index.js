@@ -335,7 +335,7 @@ function addMarkers() {
                 .style("fill", node_color_d3)
                 .on("mouseover", handleMouseOver)
                 .on("mouseout", handleMouseOut)
-                .on("click", handle_click)
+                .on("click", handle_node_click_open_table)
                 .style("cursor", "pointer")
 
             // Add a label.
@@ -375,7 +375,7 @@ function addMarkers() {
     isDrawn = true;
 }
 
-function handle_click() {
+function handle_node_click_open_table() {
     points_from_click = d3.select(this).data()[0];
     points_array = points_from_click.value.points;
 
@@ -398,9 +398,11 @@ function handle_click() {
             { data: 'gname' }
         ]
     });
-
+    $('#table_wrapper').css("pointer-events","auto")
     console.log(points_array)
 }
+
+
 
 function handleMouseOver () {
     d3.select(this)
@@ -432,7 +434,11 @@ function node_padding_d3(d) {
     return val;
 }
 
-
+function closeTable() {
+    $('#table').DataTable({
+        destroy: true,
+    });
+}
 
 function createBar1SVG() {
 
