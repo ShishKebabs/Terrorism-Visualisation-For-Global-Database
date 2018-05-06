@@ -1,4 +1,4 @@
-
+let data_table = null;
 let map = undefined;
 var overlay = undefined;
 let year_filter = undefined;
@@ -126,7 +126,7 @@ $(document).ready(() => {
         }
     });
 
-    $('#table').DataTable({
+    data_table = $('#table').DataTable({
         //data: points_array,
         //:true,
         columns: [
@@ -432,8 +432,8 @@ function handle_node_click_open_table() {
     points_from_click = d3.select(this).data()[0];
     points_array = points_from_click.value.points;
 
-    $('#table').dataTable().fnClearTable();
-    $('#table').dataTable().fnAddData(points_array);
+    data_table.clear();
+    data_table.rows.add(points_array).draw();
 
     $('#table_wrapper').show();
 
