@@ -59,7 +59,7 @@ function initMap() {
         window.clearTimeout(bounds_check_freq);
         bounds_check_freq = window.setTimeout(function () {
             addMarkers();
-        }, 10);
+        }, 50);
     });
 }
 
@@ -73,6 +73,7 @@ function disableMap(disable) {
 
 
 $(document).ready(() => {
+
     year_filter = $("#yearSlider").prop('min');
     $("#yearSlider").val(year_filter);
     $("#yearSlider").change(e => {
@@ -123,6 +124,7 @@ $(document).ready(() => {
             update_timeline_freq += 0.1;
         }
     });
+
 })
 
 let timeline_iteration = 0;
@@ -164,18 +166,21 @@ function loadData() {
     for (i = max_zoom; i >= min_zoom; i--) {
         data_per_zoom[i] = terrorFiltered
     }
-    cluster = 0;
+    node_merge_amount = 0;
 
     for (i = max_zoom; i >= min_zoom; i--) {
         let years = {}
         if (i <= 3) {
-            cluster += 2;
+           //node_merge_amount += 2;
+           node_merge_amount += 4;
         }
-        if (i <= 5) {
-            cluster += 7;
+        else if (i <= 5) {
+            //node_merge_amount += 7;
+            node_merge_amount += 3;
         }
-        else if (i <= 8) {
-            cluster += 1;
+        else if (i <= 7) {
+            node_merge_amount += 2;
+            //node_merge_amount += 1;
         }
 
         data_per_zoom[i].forEach(d => {
@@ -185,12 +190,12 @@ function loadData() {
                 years[iyear] = {}
             }
 
-            let coord_lat = parseFloat(latitude).toFixed(1) //change to 1 when doesnt lag
+            let coord_lat = parseFloat(latitude).toFixed(1)
             let coord_lng = parseFloat(longitude).toFixed(1)
 
-            if (cluster > 0) {
-                offset_lat = (coord_lat % cluster);
-                offset_lng = (coord_lng % cluster);
+            if (node_merge_amount > 0) {
+                offset_lat = (coord_lat % node_merge_amount);
+                offset_lng = (coord_lng % node_merge_amount);
             } else {
                 offset_lat = 0;
                 offset_lng = 0;
@@ -220,8 +225,22 @@ function loadData() {
             const year = years[iyear]
             for (ipoint in year) {
                 const point = year[ipoint];
-                point.coord_lat = point.points[0].latitude;
-                point.coord_lng = point.points[0].longitude
+                let sumlat=0,sumlong =0;
+                length = point.points.length
+                for(i = 0; i < point.points.length; i++) {
+                    sumlat += parseFloat(point.points[i].latitude);
+                    sumlong+= parseFloat(point.points[i].longitude);
+                }
+               // console.log(point.points)
+               // console.log("length" + length)
+               // console.log("sumlat" + sumlat)
+               // console.log("sumlong" + sumlong)
+
+                sumlat = sumlat / length;
+                sumlong = sumlong / length;
+
+                point.coord_lat = sumlat;
+                point.coord_lng = sumlong;
             }
         }
     })
@@ -239,7 +258,7 @@ function loadData() {
 function addMarkers() {
     isDrawn = false;
     //disableMap(true);
-    if (overlay) {
+    if (overlay!= null && map != null) {
         overlay.setMap(null);
         overlay = null;
     }
@@ -268,9 +287,9 @@ function addMarkers() {
         //var center = camera_bounds.getCenter();  // (55.04334815163844, -1.9917653831249726)
         //console.log(coord)
         const camera_bounds = map.getBounds();
-        //if (camera_bounds.contains(latlng)) {
+        if (camera_bounds.contains(latlng)) {
             data.push(d)
-        //}
+        }
     })
 
     data.sort((a, b) => a.count - b.count)
@@ -287,25 +306,6 @@ function addMarkers() {
         // We could use a single SVG, but what size would it have?
         overlay.draw = function () {
             var projection = this.getProjection();
-
-            var handleMouseOver = function () {
-                d3.select(this)
-                    .attr("r", d => {
-                        x = node_padding_d3(d);
-                        return (x * 1.1)
-                    })
-                    .style("fill", "orange");
-            }
-
-            var handleMouseOut = function () {
-                d3.select(this)
-                    .style("fill", node_color_d3)
-                    .attr("r", node_padding_d3)
-            }
-
-
-
-
 
             var marker = layer.selectAll("svg")
                 .data(d3.entries(data))
@@ -330,7 +330,6 @@ function addMarkers() {
                     x = node_padding_d3(d)
                     return x + 3
                 })
-
                 .attr("cy", function (d) {
                     x = node_padding_d3(d)
                     return x + 3
@@ -345,8 +344,14 @@ function addMarkers() {
                 marker.append("text")
                 .attr('text-anchor', 'middle')
                 .attr("dominant-baseline", "central") 
-                .attr("x", node_padding_d3)
-                .attr("y", node_padding_d3)
+                .attr("x", function (d) {
+                    x = node_padding_d3(d)
+                    return x + 2
+                })
+                .attr("y", function (d) {
+                    x = node_padding_d3(d)
+                    return x -1
+                })
                 .attr("dy", ".33em")
                 .attr("pointer-events", "none")
                 .attr("fill", "white")
@@ -372,21 +377,59 @@ function addMarkers() {
 }
 
 function handle_click() {
-    x = d3.select(this).data();
-    console.log(x)
+    points_from_click = d3.select(this).data()[0];
+    points_array = points_from_click.value.points;
+
+
+    $('#table').DataTable({
+        destroy: true,
+        data: points_array,
+        columns: [
+            { data: 'eventid' }, 
+            { data: 'iyear' }, 
+            { data: 'country_txt' },
+            { data: 'region_txt' },
+            { data: 'city' },
+            { data: 'latitude' },
+            { data: 'longitude' },
+            { data: 'attacktype1_txt' },
+            { data: 'targtype1_txt' }, 
+            { data: 'target1' }, 
+            { data: 'natlty1_txt' },
+            { data: 'gname' }
+        ]
+    });
+
+    console.log(points_array)
+}
+
+function handleMouseOver () {
+    d3.select(this)
+        .attr("r", d => {
+            x = node_padding_d3(d);
+            return (x * 1.1)
+        })
+        .style("fill", "orange");
+}
+
+var handleMouseOut = function () {
+    d3.select(this)
+        .style("fill", node_color_d3)
+        .attr("r", node_padding_d3)
 }
 
 
+
 function node_color_d3(d) {
-    const color = d3.rgb(255, 80, 80);
-    const x = Math.floor((d.value.count) * 0.05);
+    const color = d3.rgb(255, 40,40);
+    const x = Math.floor((d.value.count) * 0.005);
     return d3.hsl(color).darker(x);
 }
 function node_padding_d3(d) {
     let val = d.value.count
-    val = Math.log2(val) * 3;
-    if (val > 20) val = 20;
-    if (val < 9) val = 9;
+    val = Math.log2(val) *1.5;
+    if (val > 17) val = 17;
+    if (val < 8) val = 8;
     return val;
 }
 

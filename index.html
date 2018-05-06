@@ -13,8 +13,13 @@
     integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
     crossorigin="anonymous"></script>
     <script src="index.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.css"/>
+ 
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.js"></script>
+    
 </head>
 <body>
+
 
     <div id="map"></div>
     <div id="year_slider">
@@ -27,10 +32,26 @@
         <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
     </div>
     <svg class = "chart"></svg>
-
-
+    <table id="table">
+            <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Year</th>
+                        <th>Country</th>
+                        <th>Region</th>
+                        <th>City</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Attack Type</th>
+                        <th>Target</th>
+                        <th>Target Type</th>
+                        <th>Nationality</th>
+                        <th>Group</th>
+                    </tr>
+            </thead>
+     </table>
     <script async>
-      createBar1SVG();
+      //createBar1SVG();
     </script>
 
 
