@@ -8,7 +8,6 @@ let isDrawn = true;
 let update_timeline_freq = 10;
 let terror = undefined;
 let bounds_check_freq = undefined;
-const min_zoom = 3;
 const data_per_zoom = []
 const terrorFiltered = []
 const years_per_zoom = []
@@ -34,6 +33,7 @@ d3.csv("/data/terrorism.csv", function (error, data) {
     if (loadData()) {
         if (map != null) {
             addMarkers();
+            createChart();
         }
     }
 });
@@ -51,10 +51,6 @@ function initMap() {
     //camera_bounds = map.getBounds(); 
     //});
 
-
-    google.maps.event.addListener(map, 'zoom_changed', function () {
-        if (map.getZoom() < 3) map.setZoom(3);
-    });
 
     google.maps.event.addListener(map, 'bounds_changed', function () {
         window.clearTimeout(bounds_check_freq);
@@ -169,7 +165,7 @@ function myTimer() {
 
 
 function loadData() {
-
+    console.log(terror)
     terror.forEach(d => {
         const { iyear, country, city, latitude, longitude } = d;
         //data filtering 
@@ -182,14 +178,17 @@ function loadData() {
     //console.log(terror)
     const max_zoom = 8;
 
-    for (i = max_zoom; i >= min_zoom; i--) {
+    for (i = max_zoom; i >= 0; i--) {
         data_per_zoom[i] = terrorFiltered
     }
     node_merge_amount = 0;
 
-    for (i = max_zoom; i >= min_zoom; i--) {
+    for (i = max_zoom; i >= 0; i--) {
         let years = {}
-        if (i <= 3) {
+        if(i <= 1 ) {
+            node_merge_amount = Number.MAX_SAFE_INTEGER;
+        }
+        else if (i <= 3) {
            //node_merge_amount += 2;
            node_merge_amount += 4;
         }
@@ -268,10 +267,6 @@ function loadData() {
 
     return (true);
 }
-
-
-
-
 
 
 function addMarkers() {
@@ -443,10 +438,59 @@ function handle_node_click_open_table() {
 
 }
 
-
 function closeTable() {
     $('#table_wrapper').css("pointer-events","none")
     $('#table_wrapper').hide();
+}
+
+
+function createChart() {
+    let years = {}
+    terror.forEach(t => {
+        if(years.hasOwnProperty(t.iyear) === false) {
+            years[t.iyear] = {count:0}
+        }
+        years[t.iyear].count +=1;
+    });
+    console.log(years);
+    const col1 = Object.keys(years).map(y => {
+        return y
+    });
+    const col2 = Object.keys(years).map(y => {
+        return years[y].count
+    });
+
+// {year:y, ...years[y] }
+
+    //console.log(x);
+
+    const d1 = ['data1']
+
+    const d2 = Object.keys(years)
+
+    const d4 = d1.concat(d2)
+
+    console.log(d4)
+
+    var chart = c3.generate({
+        bindto: '#chart',
+        data: {
+            x: 'data1',
+          columns: [
+            ['data1', ...col1],
+            ['data2', ...col2]
+          ]
+        },
+        // axis: {
+        //     x: {
+        //         type: 'timeseries',
+        //         tick: {
+        //             // this also works for non timeseries data
+        //             //values: ['2013-01-05', '2013-01-10']
+        //         }
+        //     }
+        // }
+    });
 }
 
 function createBar1SVG() {
