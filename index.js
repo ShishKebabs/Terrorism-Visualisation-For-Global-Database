@@ -126,6 +126,25 @@ $(document).ready(() => {
         }
     });
 
+    $('#table').DataTable({
+        //data: points_array,
+        //:true,
+        columns: [
+            { "title" : "ID",data: 'eventid' }, 
+            { "title" : "Year",data: 'iyear' }, 
+            { "title" : "Country",data: 'country_txt' },
+            { "title" : "Region",data: 'region_txt' },
+            { "title" : "City",data: 'city' },
+            { "title" : "Latitude",data: 'latitude' },
+            { "title" : "Longitude",data: 'longitude' },
+            { "title" : "Attack Type",data: 'attacktype1_txt' },
+            { "title" : "Target",data: 'targtype1_txt' }, 
+            { "title" : "Target Type",data: 'target1' }, 
+            { "title" : "Nationality",data: 'natlty1_txt' },
+            { "title" : "Group",data: 'gname' }
+        ]
+    });
+
 })
 
 let timeline_iteration = 0;
@@ -375,32 +394,7 @@ function addMarkers() {
     isDrawn = true;
 }
 
-function handle_node_click_open_table() {
-    points_from_click = d3.select(this).data()[0];
-    points_array = points_from_click.value.points;
 
-
-    $('#table').DataTable({
-        destroy: true,
-        data: points_array,
-        columns: [
-            { data: 'eventid' }, 
-            { data: 'iyear' }, 
-            { data: 'country_txt' },
-            { data: 'region_txt' },
-            { data: 'city' },
-            { data: 'latitude' },
-            { data: 'longitude' },
-            { data: 'attacktype1_txt' },
-            { data: 'targtype1_txt' }, 
-            { data: 'target1' }, 
-            { data: 'natlty1_txt' },
-            { data: 'gname' }
-        ]
-    });
-    $('#table_wrapper').css("pointer-events","auto")
-    console.log(points_array)
-}
 
 
 
@@ -434,10 +428,25 @@ function node_padding_d3(d) {
     return val;
 }
 
+function handle_node_click_open_table() {
+    points_from_click = d3.select(this).data()[0];
+    points_array = points_from_click.value.points;
+
+    $('#table').dataTable().fnClearTable();
+    $('#table').dataTable().fnAddData(points_array);
+
+    $('#table_wrapper').show();
+
+    $('#table_wrapper').css("pointer-events","auto")
+    console.log(points_array)
+
+
+}
+
+
 function closeTable() {
-    $('#table').DataTable({
-        destroy: true,
-    });
+    $('#table_wrapper').css("pointer-events","none")
+    $('#table_wrapper').hide();
 }
 
 function createBar1SVG() {
