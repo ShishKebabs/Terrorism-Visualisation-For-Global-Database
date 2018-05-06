@@ -1,3 +1,4 @@
+
 let map = undefined;
 var overlay = undefined;
 let year_filter = undefined;
@@ -59,7 +60,7 @@ function initMap() {
         window.clearTimeout(bounds_check_freq);
         bounds_check_freq = window.setTimeout(function () {
             addMarkers();
-        }, 50);
+        }, 20);
     });
 }
 
@@ -92,36 +93,36 @@ $(document).ready(() => {
     });
     $("#fastForward").click(() => {
         if (update_timeline_freq > 1) {
-            if (update_timeline_freq > 40) {
+            if (update_timeline_freq >= 40) {
                 update_timeline_freq -= 5;
                 return;
             }
-            if (update_timeline_freq > 30) {
+            if (update_timeline_freq >= 30) {
                 update_timeline_freq -= 2;
                 return;
             }
-            if (update_timeline_freq > 10) {
+            if (update_timeline_freq >= 10) {
                 update_timeline_freq -= 1;
                 return;
             }
-            update_timeline_freq -= 0.1;
+            update_timeline_freq -= 0.5;
         }
     });
     $("#slowDown").click(() => {
         if (update_timeline_freq < 60) {
-            if (update_timeline_freq > 40) {
+            if (update_timeline_freq >= 40) {
                 update_timeline_freq += 5;
                 return;
             }
-            if (update_timeline_freq > 30) {
+            if (update_timeline_freq >= 30) {
                 update_timeline_freq += 2;
                 return;
             }
-            if (update_timeline_freq > 10) {
+            if (update_timeline_freq >= 10) {
                 update_timeline_freq += 1;
                 return;
             }
-            update_timeline_freq += 0.1;
+            update_timeline_freq += 0.5;
         }
     });
 
@@ -139,7 +140,6 @@ function myTimer() {
             addMarkers();
             year_filter++;
         }
-        console.log(update_timeline_freq)
         timeline_iteration++;
     }
 }
@@ -245,7 +245,7 @@ function loadData() {
         }
     })
 
-    console.log(years_per_zoom)
+    //console.log(years_per_zoom)
 
     return (true);
 }
@@ -293,8 +293,6 @@ function addMarkers() {
     })
 
     data.sort((a, b) => a.count - b.count)
-    console.log(data)
-    //console.log(yearFilter, data.length, "data length")
 
     // Add the container when the overlay is added to the map.
     overlay.onAdd = function () {
@@ -367,10 +365,11 @@ function addMarkers() {
                     .style("top", (pnt.y - node_padding_d3(d)) + "px");
             }
         };
-        overlay.onRemove = function () {
-            layer.selectAll("svg").remove();
-        }
+
     };
+    overlay.onRemove = function () {
+        layer.selectAll("svg").remove();    
+    }
     overlay.setMap(map);     // Bind our overlay to the map…
     //disableMap(false);
     isDrawn = true;
@@ -428,7 +427,7 @@ function node_color_d3(d) {
 function node_padding_d3(d) {
     let val = d.value.count
     val = Math.log2(val) *1.5;
-    if (val > 17) val = 17;
+    if (val > 25) val = 25;
     if (val < 8) val = 8;
     return val;
 }
