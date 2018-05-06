@@ -1,15 +1,17 @@
 let map = undefined;
 var overlay = undefined;
-let yearFilter = undefined;
-let isPlayBtn = true;
-let timer = undefined;
+let year_filter = undefined;
+let is_play_btn = true;
+let timeline_timer = undefined;
 let isDrawn = true;
-let updateFrequency = 6;
-let sec = 0;
+let update_timeline_freq = 10;
 let terror = undefined;
-let currentGMapZoom = 5;
-let bounds_check_time = 0;
-let zoom_check_time = 0;
+let bounds_check_freq = undefined;
+const min_zoom = 3;
+const data_per_zoom = []
+const terrorFiltered = []
+const years_per_zoom = []
+
 /* 
 
 In Add markers, only push variables to data which fall within the camera coordinates
@@ -30,13 +32,11 @@ d3.csv("/data/terrorism.csv", function (error, data) {
     terror = data;
     if (loadData()) {
         if (map != null) {
-            addMarkers(currentGMapZoom)
+            addMarkers();
         }
     }
 });
 
-camera_bounds = 0
-current_centre = 0;
 
 function initMap() {
     const latlng = { lat: 51.5074, lng: 0.1278 };
@@ -45,76 +45,23 @@ function initMap() {
         center: latlng,
     });
 
+    //google.maps.event.addListenerOnce(map, 'idle', function () {
+    //currentGMapZoom = map.getZoom();
+    //camera_bounds = map.getBounds(); 
+    //});
 
 
-    google.maps.event.addListenerOnce(map, 'idle', function () {
-        currentGMapZoom = map.getZoom();
-        camera_bounds = map.getBounds();
-        current_centre = camera_bounds.getCenter();
-
-
-        google.maps.event.addListener(map, 'bounds_changed', function () {
-
-             new_camera_bounds = map.getBounds();
-             new_centre = new_camera_bounds.getCenter();
-             new_lat = new_centre.lat();
-             new_lng = new_centre.lng();
-             current_lat = current_centre.lat();
-             current_lng = current_centre.lng();
-    
-            //console.log(new_centre)
-            //console.log(new_lat)
-            //console.log(new_lng)
-            //console.log(current_lat)
-    
-            if (new_lat > current_lat + 3 || new_lat < current_lat - 3
-                || new_lng > current_lng + 3 || new_lng < current_lng - 3) {
-                    console.log(true)
-                current_centre = new_centre;
-                camera_bounds = new_camera_bounds;
-                addMarkers(currentGMapZoom)
-
-                //}
-                //var ne = camera_bounds.getNorthEast();
-                //var sw = camera_bounds.getSouthWest();
-                //console.log(ne.lat());
-                // console.log(ne.lng());
-                // console.log(sw.lat());
-                // console.log(sw.lng());
-                //console.log(camera_bounds)
-    
-    
-                //window.clearTimeout(bounds_check_time);
-                //bounds_check_time = window.setTimeout(function () {
-                    //addMarkers(currentGMapZoom)
-                //}, 100);
-         } 
-
-        
-        });
-    
-    
-    
-    
-        
-    
-         google.maps.event.addListener(map, 'zoom_changed', function () {
-            currentGMapZoom = map.getZoom();
-            //console.log(currentGMapZoom)
-    
-            window.clearTimeout(zoom_check_time);
-            zoom_check_time = window.setTimeout(function () {
-                addMarkers(currentGMapZoom);
-            }, 200);
-        });
-
+    google.maps.event.addListener(map, 'zoom_changed', function () {
+        if (map.getZoom() < 3) map.setZoom(3);
     });
-    
 
-
-
+    google.maps.event.addListener(map, 'bounds_changed', function () {
+        window.clearTimeout(bounds_check_freq);
+        bounds_check_freq = window.setTimeout(function () {
+            addMarkers();
+        }, 10);
+    });
 }
-
 
 function disableMap(disable) {
     map != null ? map.setOptions({
@@ -126,56 +73,80 @@ function disableMap(disable) {
 
 
 $(document).ready(() => {
-    yearFilter = $("#yearSlider").prop('min');
-    $("#yearSlider").val(yearFilter);
+    year_filter = $("#yearSlider").prop('min');
+    $("#yearSlider").val(year_filter);
     $("#yearSlider").change(e => {
-        yearFilter = e.target.value;
-        addMarkers(currentGMapZoom);
-        console.log(yearFilter);
+        year_filter = e.target.value;
+        addMarkers();
+        console.log(year_filter);
     });
     $("#playPause").click(() => {
-        if (isPlayBtn) {
-            timer = setInterval(myTimer, 500);
-            isPlayBtn = false;
+        if (is_play_btn) {
+            timeline_timer = setInterval(myTimer, 10);
+            is_play_btn = false;
         } else {
-            timer = clearInterval(timer);
-            isPlayBtn = true;
+            timeline_timer = clearInterval(timeline_timer);
+            is_play_btn = true;
         }
     });
     $("#fastForward").click(() => {
-        if (updateFrequency > 1) {
-            updateFrequency -= 0.5;
+        if (update_timeline_freq > 1) {
+            if (update_timeline_freq > 40) {
+                update_timeline_freq -= 5;
+                return;
+            }
+            if (update_timeline_freq > 30) {
+                update_timeline_freq -= 2;
+                return;
+            }
+            if (update_timeline_freq > 10) {
+                update_timeline_freq -= 1;
+                return;
+            }
+            update_timeline_freq -= 0.1;
         }
     });
     $("#slowDown").click(() => {
-        if (updateFrequency < 60) {
-            updateFrequency += 0.5;
+        if (update_timeline_freq < 60) {
+            if (update_timeline_freq > 40) {
+                update_timeline_freq += 5;
+                return;
+            }
+            if (update_timeline_freq > 30) {
+                update_timeline_freq += 2;
+                return;
+            }
+            if (update_timeline_freq > 10) {
+                update_timeline_freq += 1;
+                return;
+            }
+            update_timeline_freq += 0.1;
         }
     });
 })
 
-
+let timeline_iteration = 0;
 function myTimer() {
     if (isDrawn) {
-        if (sec >= updateFrequency) {
-            sec = 0;
-            if (yearFilter > $("#yearSlider").prop('max')) {
-                yearFilter = $("#yearSlider").prop('min');
+        if (timeline_iteration >= update_timeline_freq) {
+            timeline_iteration = 0;
+            if (year_filter > $("#yearSlider").prop('max')) {
+                year_filter = $("#yearSlider").prop('min');
             }
-            $("#yearSlider").val(yearFilter);
-            addMarkers(currentGMapZoom);
-            yearFilter++;
+            $("#yearSlider").val(year_filter);
+            addMarkers();
+            year_filter++;
         }
-        sec++;
+        console.log(update_timeline_freq)
+        timeline_iteration++;
     }
 }
 //loop over terror x times
 //each loop store all the different filterings
 
-const data_per_zoom = []
-const terrorFiltered = []
-const years_per_zoom = []
-let dataLoaded = false;
+
+
+
 function loadData() {
 
     terror.forEach(d => {
@@ -188,15 +159,25 @@ function loadData() {
     });
 
     //console.log(terror)
-    max_zoom = 25;
+    const max_zoom = 8;
 
-    for (i = max_zoom; i >= 0; i--) {
+    for (i = max_zoom; i >= min_zoom; i--) {
         data_per_zoom[i] = terrorFiltered
     }
     cluster = 0;
 
-    for (i = max_zoom; i >= 0; i--) {
+    for (i = max_zoom; i >= min_zoom; i--) {
         let years = {}
+        if (i <= 3) {
+            cluster += 2;
+        }
+        if (i <= 5) {
+            cluster += 7;
+        }
+        else if (i <= 8) {
+            cluster += 1;
+        }
+
         data_per_zoom[i].forEach(d => {
             const { iyear, country, city, latitude, longitude } = d;
 
@@ -204,8 +185,8 @@ function loadData() {
                 years[iyear] = {}
             }
 
-            let coord_lat = parseFloat(latitude).toFixed(2) //change to 1 when doesnt lag
-            let coord_lng = parseFloat(longitude).toFixed(2)
+            let coord_lat = parseFloat(latitude).toFixed(1) //change to 1 when doesnt lag
+            let coord_lng = parseFloat(longitude).toFixed(1)
 
             if (cluster > 0) {
                 offset_lat = (coord_lat % cluster);
@@ -217,67 +198,64 @@ function loadData() {
             coord_lat -= offset_lat
             coord_lng -= offset_lng
 
-            d.latitude = coord_lat
-            d.longitude = coord_lng
-
-
             const coords = years[iyear];
 
-            //bin
             const search_coord_string = coord_lat + "," + coord_lng
             if (coords[search_coord_string] === undefined) {
                 coords[search_coord_string] = {
                     coord_lat, coord_lng,
                     latitude, longitude,
+                    points: [],
                     count: 0,
                 }
             }
-
+            coords[search_coord_string].points.push(d)
             coords[search_coord_string].count += 1;
         });
         years_per_zoom[i] = years
-        if (i <= 7) {
-            cluster += 1;
-            if (i <= 4) {
-                cluster += 9;
-            }
-        }
-    }
 
+    }
     years_per_zoom.forEach(years => {
         for (iyear in years) {
             const year = years[iyear]
             for (ipoint in year) {
                 const point = year[ipoint];
-                point.coord_lat = point.latitude
-                point.coord_lng = point.longitude
+                point.coord_lat = point.points[0].latitude;
+                point.coord_lng = point.points[0].longitude
             }
         }
     })
+
     console.log(years_per_zoom)
 
     return (true);
 }
 
 
-function addMarkers(zoomlevel, bounds) {
+
+
+
+
+function addMarkers() {
     isDrawn = false;
     //disableMap(true);
-    if (overlay != null) {
+    if (overlay) {
         overlay.setMap(null);
+        overlay = null;
     }
     overlay = new google.maps.OverlayView();
 
     data = []
 
-
+    const zoomlevel = map.getZoom();
+    console.log(zoomlevel)
     const coords2 = years_per_zoom[zoomlevel]
     if (coords2 == null) {
         isDrawn = true;
         return;
     }
 
-    const coords = coords2[yearFilter]
+    const coords = coords2[year_filter]
 
     if (coords == undefined) {
         isDrawn = true;
@@ -289,58 +267,90 @@ function addMarkers(zoomlevel, bounds) {
         const latlng = new google.maps.LatLng(d.latitude, d.longitude);
         //var center = camera_bounds.getCenter();  // (55.04334815163844, -1.9917653831249726)
         //console.log(coord)
-        if (camera_bounds.contains(latlng)) {
+        const camera_bounds = map.getBounds();
+        //if (camera_bounds.contains(latlng)) {
             data.push(d)
-        }
+        //}
     })
 
     data.sort((a, b) => a.count - b.count)
-
+    console.log(data)
     //console.log(yearFilter, data.length, "data length")
 
     // Add the container when the overlay is added to the map.
     overlay.onAdd = function () {
-        layer = d3.select(this.getPanes().overlayLayer).append("div")
-            .attr("class", "attacks");
+        layer = d3.select(this.getPanes().overlayMouseTarget)
+            .append("div")
+            .attr("class", "attacks")
 
         // Draw each marker as a separate SVG element.
         // We could use a single SVG, but what size would it have?
         overlay.draw = function () {
             var projection = this.getProjection();
 
-            const node_padding = (d) => {
-                let val = d.value.count
-                val = Math.log2(val) * 2;
-                if (val > 17) val = 17;
-                if (val < 8) val = 8;
-                return val;
+            var handleMouseOver = function () {
+                d3.select(this)
+                    .attr("r", d => {
+                        x = node_padding_d3(d);
+                        return (x * 1.1)
+                    })
+                    .style("fill", "orange");
             }
 
-            color = d3.rgb(255, 80, 80);
-            ncolor = d => {
-                const x = Math.floor((d.value.count) * 0.05);
-                return d3.hsl(color).darker(x);
-            };
+            var handleMouseOut = function () {
+                d3.select(this)
+                    .style("fill", node_color_d3)
+                    .attr("r", node_padding_d3)
+            }
+
+
+
+
 
             var marker = layer.selectAll("svg")
                 .data(d3.entries(data))
                 .each(transform) // update existing markers
                 .enter().append("svg")
                 .each(transform)
+                .style("width", function (d) {
+                    x = node_padding_d3(d)
+                    return x * 2.7
+                })
+                .style("height", function (d) {
+                    x = node_padding_d3(d)
+                    return x * 2.7
+                })
+
+            //.attr("class", "marker")
+
             // Add a circle.
-            marker.append("circle")
-                .attr("r", node_padding)
-                .attr("cx", node_padding)
-                .attr("cy", node_padding)
-                .style('fill', ncolor);
+            var circle = marker.append("circle")
+                .attr("r", node_padding_d3)
+                .attr("cx", function (d) {
+                    x = node_padding_d3(d)
+                    return x + 3
+                })
+
+                .attr("cy", function (d) {
+                    x = node_padding_d3(d)
+                    return x + 3
+                })
+                .style("fill", node_color_d3)
+                .on("mouseover", handleMouseOver)
+                .on("mouseout", handleMouseOut)
+                .on("click", handle_click)
+                .style("cursor", "pointer")
+
             // Add a label.
-            marker.append("text")
-                .attr("text-anchor", "middle")
-                .attr("x", node_padding)
-                .attr("y", node_padding)
-                .attr("dy", ".31em")
+                marker.append("text")
+                .attr('text-anchor', 'middle')
+                .attr("dominant-baseline", "central") 
+                .attr("x", node_padding_d3)
+                .attr("y", node_padding_d3)
+                .attr("dy", ".33em")
+                .attr("pointer-events", "none")
                 .attr("fill", "white")
-                .text(function (d) { return d.value.count; });
+                .text(function (d) { return d.value.count; })
 
             function transform(d) {
                 let lat = parseFloat(d.value.coord_lat)
@@ -348,8 +358,8 @@ function addMarkers(zoomlevel, bounds) {
                 const latlng = new google.maps.LatLng(lat, lang);
                 const pnt = projection.fromLatLngToDivPixel(latlng);
                 return d3.select(this)
-                    .style("left", (pnt.x - node_padding(d)) + "px")
-                    .style("top", (pnt.y - node_padding(d)) + "px");
+                    .style("left", (pnt.x - node_padding_d3(d)) + "px")
+                    .style("top", (pnt.y - node_padding_d3(d)) + "px");
             }
         };
         overlay.onRemove = function () {
@@ -360,6 +370,27 @@ function addMarkers(zoomlevel, bounds) {
     //disableMap(false);
     isDrawn = true;
 }
+
+function handle_click() {
+    x = d3.select(this).data();
+    console.log(x)
+}
+
+
+function node_color_d3(d) {
+    const color = d3.rgb(255, 80, 80);
+    const x = Math.floor((d.value.count) * 0.05);
+    return d3.hsl(color).darker(x);
+}
+function node_padding_d3(d) {
+    let val = d.value.count
+    val = Math.log2(val) * 3;
+    if (val > 20) val = 20;
+    if (val < 9) val = 9;
+    return val;
+}
+
+
 
 function createBar1SVG() {
 
