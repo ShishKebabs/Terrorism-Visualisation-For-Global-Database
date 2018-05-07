@@ -1,68 +1,311 @@
 <!DOCTYPE html>
-<html>
-<head> 
-    <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
-    <script src="lib/d3.js"></script> <!–– V4 D3.js -->
-    <link href="lib/c3-0.5.4/c3.css" rel="stylesheet">
-    <script src="lib/c3-0.5.4/c3.js"></script>
+<html lang="en">
+<head>
+	
+	<title>Church</title>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="description" content="Demo project">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="styles/bootstrap4/bootstrap.min.css">
+	<link href="plugins/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" type="text/css" href="plugins/OwlCarousel2-2.2.1/owl.carousel.css">
+	<link rel="stylesheet" type="text/css" href="plugins/OwlCarousel2-2.2.1/owl.theme.default.css">
+	<link rel="stylesheet" type="text/css" href="plugins/OwlCarousel2-2.2.1/animate.css">
+	<link rel="stylesheet" type="text/css" href="styles/main_styles.css">
+	<link rel="stylesheet" type="text/css" href="styles/responsive.css">
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+	<script src="lib/d3.js"></script> <!–– V4 D3.js -->
+	<link href="lib/c3-0.5.4/c3.css" rel="stylesheet">
+	<script src="lib/c3-0.5.4/c3.js"></script>
 
 
-    <link async rel="stylesheet" type="text/css" href="index.css">
-    <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCwQqWg5QqG9xZZn7O_dm0DBqkIGympnks&callback=initMap"
-    type="text/javascript"></script>
-    <script
-    src="https://code.jquery.com/jquery-3.3.1.min.js"
-    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-    crossorigin="anonymous"></script>
-    <script src="index.js"></script>
-    <link rel="stylesheet" type="text/css" href="lib/DataTables/datatables.css"/>
-    <script type="text/javascript" src="lib/DataTables/datatables.js"></script>
-    
+	<link async rel="stylesheet" type="text/css" href="index.css">
+	<script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCwQqWg5QqG9xZZn7O_dm0DBqkIGympnks&callback=initMap"
+	type="text/javascript"></script>
+	<script
+	src="https://code.jquery.com/jquery-3.3.1.min.js"
+	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	crossorigin="anonymous"></script>
+	<script src="index.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/DataTables/datatables.css"/>
+	<script type="text/javascript" src="lib/DataTables/datatables.js"></script>
+
 </head>
 <body>
-    <div id="year_slider">
-        <button id="slowDown" type="button"> << </button>
-        <button id="playPause" type="button">Play/Pause</button>
-        <button id="fastForward" type="button"> >> </button>
-        Years
-    <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
-    Year Range
-    <input type="search" id="year_search" placeholder="1970 - 2016" value = "2000">
-    <input type="search" id="year_search2" placeholder="1970 - 2016" value = "2000">
 
-    <button onclick="filter()">Apply Filter</button>
+<div class="super_container">
+	
+	<!-- Header -->
+
+	<header class="header">
+		
+		<!-- Top Bar -->
+
+		<div class="top_bar">
+			<div class="container">
+				<div class="row">
+					<div class="col top_bar_content d-flex flex-row align-items-center justify-content-start">
+						<div class="event_timer">
+							<span>Next Big Event:</span>
+							<ul class="timer">
+								<li class="d-inline-flex">
+									<div id="day" class="timer_num">03</div>
+									<div class="timer_unit">Days</div>
+								</li>
+								<li class="d-inline-flex">
+									<div id="hour" class="timer_num">15</div>
+									<div class="timer_unit">Hours</div>
+								</li>
+								<li class="d-inline-flex">
+									<div id="minute" class="timer_num">45</div>
+									<div class="timer_unit">Minutes</div>
+								</li>
+								<li class="d-inline-flex">
+									<div id="second" class="timer_num">23</div>
+									<div class="timer_unit">Seconds</div>
+								</li>
+							</ul>
+						</div>
+						<div class="donations_button ml-auto">
+							<a href="#">Send Donations</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Header Content -->
+
+		<div class="header_container">
+			<div class="container">
+				<div class="row">
+					<div class="col">
+						<div class="header_content d-flex flex-row align-items-center justify-content-start">
+
+								<div id="year_slider">
+									<button id="slowDown" type="button"> << </button>
+									<button id="playPause" type="button">Play/Pause</button>
+									<button id="fastForward" type="button"> >> </button>
+									Years
+									<input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
+									Year Range
+									<input type="search" id="year_search" placeholder="1970 - 2016" value = "2000">
+									<input type="search" id="year_search2" placeholder="1970 - 2016" value = "2000">
+							
+									<button onclick="filter()">Apply Filter</button>
+							
+								</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="header_search_container">
+				<div class="container">
+					<div class="row">
+						<div class="col">
+							<div class="header_search_content d-flex flex-row align-items-center justify-content-end">
+								<form action="#" class="header_search_form">
+									<input type="search" class="search_input" placeholder="Search" required="required">
+									<button class="header_search_button d-flex flex-column align-items-center justify-content-center">
+										<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_2" x="0px" y="0px" viewBox="0 0 56.966 56.966" style="enable-background:new 0 0 56.966 56.966;" xml:space="preserve" width="20px" height="20px">
+											<path class="search_path" d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" fill="#353535"/>
+										</svg>
+									</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>			
+			</div>
+		</div>
+
+	</header>
+
+	<!-- Menu -->
+
+	<div class="menu d-flex flex-column align-items-center justify-content-center">
+		<div class="menu_content">
+			<div class="cross_1 d-flex flex-column align-items-center justify-content-center"><img src="images/cross_1.png" alt=""></div>
+			<form action="#" class="menu_search_form">
+				<input type="search" class="menu_search_input" placeholder="Search" required="required">
+				<button class="menu_search_button d-flex flex-column align-items-center justify-content-center">
+				<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_3" x="0px" y="0px" viewBox="0 0 56.966 56.966" style="enable-background:new 0 0 56.966 56.966;" xml:space="preserve" width="20px" height="20px">
+					<path class="search_path" d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" fill="#353535"/>
+				</svg>
+			</button>
+			</form>
+			<nav class="menu_nav">
+				<ul>
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="ministries.html">Ministries</a></li>
+					<li><a href="sermons.html">Sermons</a></li>
+					<li><a href="blog.html">Blog</a></li>
+					<li><a href="contact.html">Contact</a></li>
+				</ul>
+			</nav>
+		</div>
+		<div class="menu_close"><i class="fa fa-times" aria-hidden="true"></i></div>
+	</div>
+
+	<!-- Home -->
+
+	<div class="home">
+		
+		<!-- Home Slider -->
+
+		<div class="home_slider_container">
+		
+			<div id ="container"> 
+				<div id="map"></div>
+            </div>
+            
+			<div id="table_wrapper" style = "position: absolute;left:0;top:0;right:0;bottom:0;pointer-events: none; display:none;">
+				<div style = "background-color: white; border-radius:20px;padding:10px; margin: 10%;height:70%;width:80%;overflow-y:scroll;">
+				<div style ="float: right;cursor:pointer;">
+					<img src="close_button.png" style = "width: 30px; height: 30px;" onclick="closeTable()"/>
+				</div>
+				<table id="table">
+				</table>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<!-- Intro -->
+
+	<div class="sermon">
+        <div class="sermon_background" style="background-image:url(images/sermon.png)"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="section_title_container">
+                        <div class="section_image"><img src="images/church_3.png" alt=""></div>
+                        <div class="section_title"><h2>Today's Sermon</h2></div>
+                        <div class="section_subtitle">God loves us all</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row sermon_row">
+
+                <div style = "background-color: white;" id="chart_year_attacks"></div>
+
+            </div>
+        </div>
+    </div>
+
+	<!-- Services -->
+
+	<div class="sermon">
+        <div class="sermon_background" style="background-image:url(images/services.jpg)"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="section_title_container">
+                        <div class="section_image"><img src="images/church_3.png" alt=""></div>
+                        <div class="section_title"><h2>Today's Sermon</h2></div>
+                        <div class="section_subtitle">God loves us all</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row sermon_row">
+
+                <div style = "background-color: white;" id="chart_country_attacks"></div>
+
+            </div>
+        </div>
+    </div>
+
+	<!-- Sermon -->
+
+	<div class="sermon">
+        <div class="sermon_background" style="background-image:url(images/sermon_small.jpg)"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <div class="section_title_container">
+                        <div class="section_image"><img src="images/church_3.png" alt=""></div>
+                        <div class="section_title"><h2>Today's Sermon</h2></div>
+                        <div class="section_subtitle">God loves us all</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row sermon_row">
+
+                <div style = "background-color: white;" id="chart_month_attacks"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Newsletter -->
+
+	<div class="newsletter">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					<div class="newsletter_content d-flex flex-lg-row flex-column align-items-center justify-content-start">
+						<div class="newsletter_title">Subscribe to our newsletter</div>
+						<div class="newsletter_form_container ml-lg-auto">
+							<form action="#" id="newsletter_form" class="newsletter_form">
+								<input type="email" class="newsletter_input" placeholder="Your email" required="required">
+								<button id="newsletter_button" class="newsletter_button">Subscribe</button>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Footer -->
+
+	<footer class="footer">
+		<div class="container">
+			<div class="row">
+
+				<!-- Footer Column -->
+				<div class="col-lg-3 footer_col">
+					<div class="footer_contact">
+						<div class="footer_title">Contact Us</div>
+						<ul>
+							<li><span>Address: </span>1481 Creekside Lane Avila Beach, CA 93424</li>
+							<li class="footer_contact_phone">
+								<span>Phone: </span>
+								<div>
+									<div> +53 345 7953 32453</div>
+									<div> +53 345 7557 822112</div>
+								</div>
+							</li>
+							<li><span>Email: </span>yourmail@gmail.com</li>
+						</ul>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<!-- Copyright -->
+		<div class="copyright text-center"><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+            Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
+            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+        </div>
+
+	</footer>
 
 </div>
 
-    <div id ="container"> 
-        <div id="map"></div>
-
-    
-    </div>
-    <div id="table_wrapper" style = "position: absolute;left:0;top:0;right:0;bottom:0;pointer-events: none; display:none;">
-        <div style = "margin: 10%;height:70%;width:80%;overflow-y:scroll;">
-        <div style ="float: right;">
-            <img src="close_button.png" style = "width: 20px; height: 20px;" onclick="closeTable()"/>
-        </div>
-        <table id="table">
-        </table>
-        </div>
-    </div>
-    <div id="chart_year_attacks"></div>
-    <div id="chart_country_attacks"></div>
-
-    <div id="chart_month_attacks"></div>
-
-
-
-
-<!--
-    <script async>
-      //createBar1SVG();
-    </script>
-    <svg class = "chart"></svg>
--->
-
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="styles/bootstrap4/popper.js"></script>
+<script src="styles/bootstrap4/bootstrap.min.js"></script>
+<script src="plugins/OwlCarousel2-2.2.1/owl.carousel.js"></script>
+<script src="plugins/easing/easing.js"></script>
+<script src="plugins/parallax-js-master/parallax.min.js"></script>
+<script src="js/custom.js"></script>
 </body>
 </html>

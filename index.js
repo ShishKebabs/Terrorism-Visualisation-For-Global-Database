@@ -175,8 +175,8 @@ function loadData(terror) {
         return true;
     })//.slice(0,10000)
 
-    for(let clustersIndex = 1; clustersIndex <= 2048; clustersIndex *= 2) {
-        const modulo = clustersIndex/256;
+    for(let clustersIndex = 1; clustersIndex <= 4096; clustersIndex *= 2) {
+        const modulo = clustersIndex/180;
 
         const cluster = clusterRawData(terror_filtered,modulo)
 
