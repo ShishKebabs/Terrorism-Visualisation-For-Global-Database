@@ -6,12 +6,11 @@ let is_play_btn = true;
 let timeline_timer = undefined;
 let isDrawn = true;
 let update_timeline_freq = 10;
-let terror = undefined;
 let bounds_check_freq = undefined;
 const data_per_zoom = []
-const terrorFiltered = []
+const terror_filtered = []
 const years_per_zoom = []
-
+let filterable_data = []
 /* 
 
 In Add markers, only push variables to data which fall within the camera coordinates
@@ -29,8 +28,7 @@ In Add markers, only push variables to data which fall within the camera coordin
 } */
 d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
-    terror = data;
-    if (loadData()) {
+    if (loadData(data)) {
         if (map != null) {
             addMarkers();
             createChart();
@@ -55,7 +53,7 @@ function initMap() {
     google.maps.event.addListener(map, 'bounds_changed', function () {
         //window.clearTimeout(bounds_check_freq);
         //bounds_check_freq = window.setTimeout(function () {
-            addMarkers();
+        addMarkers();
         //}, 20);
     });
 }
@@ -126,18 +124,18 @@ $(document).ready(() => {
         //data: points_array,
         //:true,
         columns: [
-            { "title" : "ID",data: 'eventid' }, 
-            { "title" : "Year",data: 'iyear' }, 
-            { "title" : "Country",data: 'country_txt' },
-            { "title" : "Region",data: 'region_txt' },
-            { "title" : "City",data: 'city' },
-            { "title" : "Latitude",data: 'latitude' },
-            { "title" : "Longitude",data: 'longitude' },
-            { "title" : "Attack Type",data: 'attacktype1_txt' },
-            { "title" : "Target",data: 'targtype1_txt' }, 
-            { "title" : "Target Type",data: 'target1' }, 
-            { "title" : "Nationality",data: 'natlty1_txt' },
-            { "title" : "Group",data: 'gname' }
+            { "title": "ID", data: 'eventid' },
+            { "title": "Year", data: 'iyear' },
+            { "title": "Country", data: 'country_txt' },
+            { "title": "Region", data: 'region_txt' },
+            { "title": "City", data: 'city' },
+            { "title": "Latitude", data: 'latitude' },
+            { "title": "Longitude", data: 'longitude' },
+            { "title": "Attack Type", data: 'attacktype1_txt' },
+            { "title": "Target", data: 'targtype1_txt' },
+            { "title": "Target Type", data: 'target1' },
+            { "title": "Nationality", data: 'natlty1_txt' },
+            { "title": "Group", data: 'gname' }
         ]
     });
 
@@ -164,7 +162,7 @@ function myTimer() {
 
 
 
-function loadData() {
+function loadData(terror) {
     console.log(terror)
     terror.forEach(d => {
         const { iyear, country, city, latitude, longitude } = d;
@@ -172,33 +170,27 @@ function loadData() {
         if (!latitude || !longitude || !iyear) {
             return;
         }
-        terrorFiltered.push(d)
+        terror_filtered.push(d)
     });
 
     //console.log(terror)
-    const max_zoom = 25;
+    const max_zoom = 8;
 
     for (i = max_zoom; i >= 0; i--) {
-        data_per_zoom[i] = terrorFiltered
+        data_per_zoom[i] = terror_filtered
     }
     node_merge_amount = 0;
 
     for (i = max_zoom; i >= 0; i--) {
         let years = {}
-        if(i <= 1 ) {
+        if (i <= 1) {
             node_merge_amount = Number.MAX_SAFE_INTEGER;
-        }
-        else if (i <= 3) {
-           //node_merge_amount += 2;
-           node_merge_amount += 3;
-        }
-        else if (i <= 5) {
-            //node_merge_amount += 7;
+        } else if (i <= 3) {
+            node_merge_amount += 3;
+        } else if (i <= 5) {
             node_merge_amount += 2;
-        }
-        else if (i <= 7) {
+        } else if (i <= 7) {
             node_merge_amount += 1;
-            //node_merge_amount += 1;
         }
 
         data_per_zoom[i].forEach(d => {
@@ -208,25 +200,26 @@ function loadData() {
                 years[iyear] = {}
             }
 
-            let coord_lat = parseFloat(latitude).toFixed(1)
-            let coord_lng = parseFloat(longitude).toFixed(1)
+            let plot_lat = parseFloat(latitude).toFixed(1)
+            let plot_lng = parseFloat(longitude).toFixed(1)
 
             if (node_merge_amount > 0) {
-                offset_lat = (coord_lat % node_merge_amount);
-                offset_lng = (coord_lng % node_merge_amount);
+                offset_lat = (plot_lat % node_merge_amount);
+                offset_lng = (plot_lng % node_merge_amount);
             } else {
                 offset_lat = 0;
                 offset_lng = 0;
             }
-            coord_lat -= offset_lat
-            coord_lng -= offset_lng
+            plot_lat -= offset_lat
+            plot_lng -= offset_lng
 
             const coords = years[iyear];
 
-            const search_coord_string = coord_lat + "," + coord_lng
+            const search_coord_string = plot_lat + "," + plot_lng
             if (coords[search_coord_string] === undefined) {
                 coords[search_coord_string] = {
-                    coord_lat, coord_lng,
+                    year: iyear,
+                    plot_lat, plot_lng,
                     latitude, longitude,
                     points: [],
                     count: 0,
@@ -237,25 +230,23 @@ function loadData() {
 
             return years;
         });
-
         years_per_zoom[i] = years
-
     }
     years_per_zoom.forEach(years => {
         for (iyear in years) {
             const year = years[iyear]
             for (ipoint in year) {
                 const point = year[ipoint];
-                let sumlat=0,sumlong =0;
+                let sumlat = 0, sumlong = 0;
                 length = point.points.length
-                for(i = 0; i < point.points.length; i++) {
+                for (i = 0; i < point.points.length; i++) {
                     sumlat += parseFloat(point.points[i].latitude);
-                    sumlong+= parseFloat(point.points[i].longitude);
+                    sumlong += parseFloat(point.points[i].longitude);
                 }
-               // console.log(point.points)
-               // console.log("length" + length)
-               // console.log("sumlat" + sumlat)
-               // console.log("sumlong" + sumlong)
+                // console.log(point.points)
+                // console.log("length" + length)
+                // console.log("sumlat" + sumlat)
+                // console.log("sumlong" + sumlong)
 
                 sumlat = sumlat / length;
                 sumlong = sumlong / length;
@@ -266,16 +257,40 @@ function loadData() {
         }
     })
 
+    filterable_data = years_per_zoom;
     //console.log(years_per_zoom)
 
     return (true);
 }
 
 
-function addMarkers() {
+function filter() {
+    let year = $("#year_search").val();
+    if (year != null) {
+        year_filter = $("#year_search").val();
+    }
+
+    //let year = $("#year_search").val();
+    if (year != null) {
+        year_filter = $("#year_search").val();
+    }
+
+    /*
+    var newArray = homes.filter(function (el) {
+        return el.price <= 1000 &&
+            el.sqft >= 500 &&
+            el.num_of_beds >= 2 &&
+            el.num_of_baths >= 2.5;
+    })
+*/
+    addMarkers();
+}
+
+
+function addMarkers(array) {
     isDrawn = false;
     //disableMap(true);
-    if (overlay!= null && map != null) {
+    if (overlay != null && map != null) {
         overlay.setMap(null);
         overlay = null;
     }
@@ -284,7 +299,6 @@ function addMarkers() {
     data = []
 
     const zoomlevel = map.getZoom();
-    console.log(zoomlevel)
     const coords2 = years_per_zoom[zoomlevel]
     if (coords2 == null) {
         isDrawn = true;
@@ -356,16 +370,16 @@ function addMarkers() {
                 .style("cursor", "pointer")
 
             // Add a label.
-                marker.append("text")
+            marker.append("text")
                 .attr('text-anchor', 'middle')
-                .attr("dominant-baseline", "central") 
+                .attr("dominant-baseline", "central")
                 .attr("x", function (d) {
                     x = node_padding_d3(d)
                     return x + 2
                 })
                 .attr("y", function (d) {
                     x = node_padding_d3(d)
-                    return x -1
+                    return x - 1
                 })
                 .attr("dy", ".33em")
                 .attr("pointer-events", "none")
@@ -385,7 +399,7 @@ function addMarkers() {
 
     };
     overlay.onRemove = function () {
-        layer.selectAll("svg").remove();    
+        layer.selectAll("svg").remove();
     }
     overlay.setMap(map);     // Bind our overlay to the map…
     //disableMap(false);
@@ -396,7 +410,7 @@ function addMarkers() {
 
 
 
-function handleMouseOver () {
+function handleMouseOver() {
     d3.select(this)
         .attr("r", d => {
             x = node_padding_d3(d);
@@ -414,13 +428,13 @@ var handleMouseOut = function () {
 
 
 function node_color_d3(d) {
-    const color = d3.rgb(255, 40,40);
+    const color = d3.rgb(255, 40, 40);
     const x = Math.floor((d.value.count) * 0.005);
     return d3.hsl(color).darker(x);
 }
 function node_padding_d3(d) {
     let val = d.value.count
-    val = Math.log2(val) *1.5;
+    val = Math.log2(val) * 1.5;
     if (val > 25) val = 25;
     if (val < 8) val = 8;
     return val;
@@ -435,25 +449,25 @@ function handle_node_click_open_table() {
 
     $('#table_wrapper').show();
 
-    $('#table_wrapper').css("pointer-events","auto")
+    $('#table_wrapper').css("pointer-events", "auto")
     console.log(points_array)
 
 
 }
 
 function closeTable() {
-    $('#table_wrapper').css("pointer-events","none")
+    $('#table_wrapper').css("pointer-events", "none")
     $('#table_wrapper').hide();
 }
 
 
 function createChart() {
     let years = {}
-    terror.forEach(t => {
-        if(years.hasOwnProperty(t.iyear) === false) {
-            years[t.iyear] = {count:0}
+    terror_filtered.forEach(t => {
+        if (years.hasOwnProperty(t.iyear) === false) {
+            years[t.iyear] = { count: 0 }
         }
-        years[t.iyear].count +=1;
+        years[t.iyear].count += 1;
     });
     let col1 = Object.keys(years).map(y => {
         return y
@@ -462,7 +476,7 @@ function createChart() {
         return years[y].count
     });
 
-// {year:y, ...years[y] }
+    // {year:y, ...years[y] }
 
     //console.log(x);
 
@@ -476,10 +490,10 @@ function createChart() {
         bindto: '#chart_year_attacks',
         data: {
             x: 'data1',
-          columns: [
-            ['data1', ...col1],
-            ['data2', ...col2]
-          ]
+            columns: [
+                ['data1', ...col1],
+                ['data2', ...col2]
+            ]
         }
     });
 
@@ -491,11 +505,11 @@ function createChart() {
 
     countries = {}
 
-    terror.forEach(t => {
-        if(countries.hasOwnProperty(t.country_txt) == false) {
-            countries[t.country_txt] = {country : t.country_txt,count:0}
+    terror_filtered.forEach(t => {
+        if (countries.hasOwnProperty(t.country_txt) == false) {
+            countries[t.country_txt] = { country: t.country_txt, count: 0 }
         }
-        countries[t.country_txt].count +=1;
+        countries[t.country_txt].count += 1;
     });
 
     tempData = []
@@ -503,9 +517,9 @@ function createChart() {
         //thing = countries[c];
         return countries[c];
     })
-    
+
     tempData.sort((a, b) => b.count - a.count)
-    tempData = tempData.slice(0,25);
+    tempData = tempData.slice(0, 25);
 
     console.log(tempData)
     col1 = tempData.map(y => {
@@ -524,24 +538,24 @@ function createChart() {
     var chart = c3.generate({
         bindto: '#chart_country_attacks',
         data: {
-            x : 'x',
+            x: 'x',
             labels: true,
-          columns: [
-            ['x', ...col1],
-            ['data2', ...col2]
-          ],
-          
-        type: 'bar'
-    },
-    axis: {
-        x: {
-            type: 'category',
-            tick: {
-                rotate: 50,
-                multiline: false
-            },
-        }
-    },
+            columns: [
+                ['x', ...col1],
+                ['data2', ...col2]
+            ],
+
+            type: 'bar'
+        },
+        axis: {
+            x: {
+                type: 'category',
+                tick: {
+                    rotate: 50,
+                    multiline: false
+                },
+            }
+        },
 
     });
 
@@ -549,11 +563,11 @@ function createChart() {
 
     months = {}
 
-    terror.forEach(t => {
-        if(months.hasOwnProperty(t.imonth) === false) {
-            months[t.imonth] = {count:0}
+    terror_filtered.forEach(t => {
+        if (months.hasOwnProperty(t.imonth) === false) {
+            months[t.imonth] = { count: 0 }
         }
-        months[t.imonth].count +=1;
+        months[t.imonth].count += 1;
     });
     col1 = Object.keys(months).map(y => {
         return y
@@ -566,10 +580,10 @@ function createChart() {
         bindto: '#chart_month_attacks',
         data: {
             x: 'data1',
-          columns: [
-            ['data1', ...col1],
-            ['data2', ...col2]
-          ]
+            columns: [
+                ['data1', ...col1],
+                ['data2', ...col2]
+            ]
         }
     });
 
