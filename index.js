@@ -7,10 +7,10 @@ let timeline_timer = undefined;
 let isDrawn = true;
 let update_timeline_freq = 10;
 let bounds_check_freq = undefined;
-const data_per_zoom = []
 const terror_filtered = []
+const terror_per_zoom = []
 const years_per_zoom = []
-let filterable_data = []
+let current_data = []
 /* 
 
 In Add markers, only push variables to data which fall within the camera coordinates
@@ -30,7 +30,7 @@ d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
     if (loadData(data)) {
         if (map != null) {
-            addMarkers();
+            addMarkers(current_data);
             createChart();
         }
     }
@@ -53,7 +53,7 @@ function initMap() {
     google.maps.event.addListener(map, 'bounds_changed', function () {
         //window.clearTimeout(bounds_check_freq);
         //bounds_check_freq = window.setTimeout(function () {
-        addMarkers();
+        addMarkers(current_data);
         //}, 20);
     });
 }
@@ -73,7 +73,7 @@ $(document).ready(() => {
     $("#yearSlider").val(year_filter);
     $("#yearSlider").change(e => {
         year_filter = e.target.value;
-        addMarkers();
+        addMarkers(years_per_zoom);
         console.log(year_filter);
     });
     $("#playPause").click(() => {
@@ -150,7 +150,7 @@ function myTimer() {
                 year_filter = $("#yearSlider").prop('min');
             }
             $("#yearSlider").val(year_filter);
-            addMarkers();
+            addMarkers(years_per_zoom);
             year_filter++;
         }
         timeline_iteration++;
@@ -163,7 +163,7 @@ function myTimer() {
 
 
 function loadData(terror) {
-    console.log(terror)
+    //console.log(terror)
     terror.forEach(d => {
         const { iyear, country, city, latitude, longitude } = d;
         //data filtering 
@@ -174,32 +174,29 @@ function loadData(terror) {
     });
 
     //console.log(terror)
-    const max_zoom = 8;
+    const MAX_ZOOM = 8;
 
-    for (i = max_zoom; i >= 0; i--) {
-        data_per_zoom[i] = terror_filtered
+    for (i = MAX_ZOOM; i >= 0; i--) {
+        terror_per_zoom[i] = terror_filtered
     }
     node_merge_amount = 0;
 
-    for (i = max_zoom; i >= 0; i--) {
+    for (i = MAX_ZOOM; i >= 0; i--) {
         let years = {}
+        let count_per_year_atpos = 0;
+        let count_total_atpos = 0;
+
         if (i <= 1) {
             node_merge_amount = Number.MAX_SAFE_INTEGER;
         } else if (i <= 3) {
-            node_merge_amount += 3;
+            node_merge_amount += 6;
         } else if (i <= 5) {
-            node_merge_amount += 2;
+            node_merge_amount += 3;
         } else if (i <= 7) {
             node_merge_amount += 1;
         }
-
-        data_per_zoom[i].forEach(d => {
+        terror_per_zoom[i].forEach(d => {
             const { iyear, country, city, latitude, longitude } = d;
-
-            if (years[iyear] == undefined) {
-                years[iyear] = {}
-            }
-
             let plot_lat = parseFloat(latitude).toFixed(1)
             let plot_lng = parseFloat(longitude).toFixed(1)
 
@@ -213,8 +210,14 @@ function loadData(terror) {
             plot_lat -= offset_lat
             plot_lng -= offset_lng
 
-            const coords = years[iyear];
+            //d.plot_lat = plot_lat
+            //d.plot_lng = plot_lng;
 
+            if (years[iyear] == undefined) {
+                years[iyear] = {}
+            }
+
+            const coords = years[iyear];
             const search_coord_string = plot_lat + "," + plot_lng
             if (coords[search_coord_string] === undefined) {
                 coords[search_coord_string] = {
@@ -228,7 +231,9 @@ function loadData(terror) {
             coords[search_coord_string].points.push(d)
             coords[search_coord_string].count += 1;
 
-            return years;
+
+
+            return d
         });
         years_per_zoom[i] = years
     }
@@ -257,23 +262,47 @@ function loadData(terror) {
         }
     })
 
-    filterable_data = years_per_zoom;
-    //console.log(years_per_zoom)
-
+    current_data = years_per_zoom;
     return (true);
 }
 
+//new_data = []
+let year_filter1 = 0;
 
 function filter() {
+    new_data = []
     let year = $("#year_search").val();
+    year_filter1 = 0;
+    let year_filter2 = 0;
+
     if (year != null) {
-        year_filter = $("#year_search").val();
+        year_filter1 = $("#year_search").val();
     }
 
-    //let year = $("#year_search").val();
+    let year2 = $("#year_search2").val();
     if (year != null) {
-        year_filter = $("#year_search").val();
+        year_filter2 = $("#year_search2").val();
     }
+
+    //console.log(years_per_zoom[map.getZoom()]);
+
+
+    years_per_zoom.forEach(zoom_level => {
+        x = {}
+        for (iyear in zoom_level) {
+            let year = zoom_level[iyear]
+            if (iyear >= year_filter1 && iyear <= year_filter2) {
+                x[iyear] = year
+                //console.log(current_zoom[iyear])
+            }
+        }
+        new_data.push(x)
+    }
+
+    );
+    console.log(years_per_zoom)
+    console.log(new_data)
+
 
     /*
     var newArray = homes.filter(function (el) {
@@ -283,7 +312,8 @@ function filter() {
             el.num_of_baths >= 2.5;
     })
 */
-    addMarkers();
+    current_data = new_data;
+    addMarkers(current_data);
 }
 
 
@@ -296,21 +326,26 @@ function addMarkers(array) {
     }
     overlay = new google.maps.OverlayView();
 
-    data = []
-
+    let coords2
     const zoomlevel = map.getZoom();
-    const coords2 = years_per_zoom[zoomlevel]
+
+    coords2 = array[zoomlevel]
+    
+
     if (coords2 == null) {
         isDrawn = true;
         return;
     }
-
-    const coords = coords2[year_filter]
+    console.log(year_filter1)
+    const coords = coords2[year_filter1]
 
     if (coords == undefined) {
         isDrawn = true;
         return;
     }
+
+
+    data = []
 
     Object.keys(coords).forEach(coord => {
         const d = coords[coord]
@@ -450,7 +485,7 @@ function handle_node_click_open_table() {
     $('#table_wrapper').show();
 
     $('#table_wrapper').css("pointer-events", "auto")
-    console.log(points_array)
+    //console.log(points_array)
 
 
 }
@@ -521,7 +556,7 @@ function createChart() {
     tempData.sort((a, b) => b.count - a.count)
     tempData = tempData.slice(0, 25);
 
-    console.log(tempData)
+    //console.log(tempData)
     col1 = tempData.map(y => {
         return y.country
     });
@@ -532,8 +567,8 @@ function createChart() {
 
 
 
-    console.log(col1)
-    console.log(col2)
+    //console.log(col1)
+    //console.log(col2)
 
     var chart = c3.generate({
         bindto: '#chart_country_attacks',
