@@ -28,8 +28,8 @@
         Years
     <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
     Year Range
-    <input type="search" id="year_search" placeholder="1970 - 2016">
-    <input type="search" id="year_search2" placeholder="1970 - 2016">
+    <input type="search" id="year_search" placeholder="1970 - 2016" value = "2000">
+    <input type="search" id="year_search2" placeholder="1970 - 2016" value = "2000">
 
     <button onclick="filter()">Apply Filter</button>
 
@@ -37,18 +37,18 @@
 
     <div id ="container"> 
         <div id="map"></div>
-        <div id="table_wrapper" style = "position: fixed;left:0;top:0;right:0;bottom:0;pointer-events: none; display:none;">
-                <div style = "margin: 10%;height:80%;width:80%;overflow-y:scroll;">
-                <div style ="float: right;">
-                    <img src="close_button.png" style = "width: 20px; height: 20px;" onclick="closeTable()"/>
-                </div>
-                <table id="table">
-                </table>
-                </div>
-            </div>
+
     
     </div>
-
+    <div id="table_wrapper" style = "position: absolute;left:0;top:0;right:0;bottom:0;pointer-events: none; display:none;">
+        <div style = "margin: 10%;height:70%;width:80%;overflow-y:scroll;">
+        <div style ="float: right;">
+            <img src="close_button.png" style = "width: 20px; height: 20px;" onclick="closeTable()"/>
+        </div>
+        <table id="table">
+        </table>
+        </div>
+    </div>
     <div id="chart_year_attacks"></div>
     <div id="chart_country_attacks"></div>
 

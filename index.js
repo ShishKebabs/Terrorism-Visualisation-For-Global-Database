@@ -173,106 +173,20 @@ function loadData(terror) {
         terror_filtered.push(d)
     });
 
-    //console.log(terror)
-    const MAX_ZOOM = 8;
-
-    for (i = MAX_ZOOM; i >= 0; i--) {
-        terror_per_zoom[i] = terror_filtered
-    }
-    node_merge_amount = 0;
-
-    for (i = MAX_ZOOM; i >= 0; i--) {
-        let years = {}
-        let count_per_year_atpos = 0;
-        let count_total_atpos = 0;
-
-        if (i <= 1) {
-            node_merge_amount = Number.MAX_SAFE_INTEGER;
-        } else if (i <= 3) {
-            node_merge_amount += 6;
-        } else if (i <= 5) {
-            node_merge_amount += 3;
-        } else if (i <= 7) {
-            node_merge_amount += 1;
-        }
-        terror_per_zoom[i].forEach(d => {
-            const { iyear, country, city, latitude, longitude } = d;
-            let plot_lat = parseFloat(latitude).toFixed(1)
-            let plot_lng = parseFloat(longitude).toFixed(1)
-
-            if (node_merge_amount > 0) {
-                offset_lat = (plot_lat % node_merge_amount);
-                offset_lng = (plot_lng % node_merge_amount);
-            } else {
-                offset_lat = 0;
-                offset_lng = 0;
-            }
-            plot_lat -= offset_lat
-            plot_lng -= offset_lng
-
-            //d.plot_lat = plot_lat
-            //d.plot_lng = plot_lng;
-
-            if (years[iyear] == undefined) {
-                years[iyear] = {}
-            }
-
-            const coords = years[iyear];
-            const search_coord_string = plot_lat + "," + plot_lng
-            if (coords[search_coord_string] === undefined) {
-                coords[search_coord_string] = {
-                    year: iyear,
-                    plot_lat, plot_lng,
-                    latitude, longitude,
-                    points: [],
-                    count: 0,
-                }
-            }
-            coords[search_coord_string].points.push(d)
-            coords[search_coord_string].count += 1;
-
-
-
-            return d
-        });
-        years_per_zoom[i] = years
-    }
-    years_per_zoom.forEach(years => {
-        for (iyear in years) {
-            const year = years[iyear]
-            for (ipoint in year) {
-                const point = year[ipoint];
-                let sumlat = 0, sumlong = 0;
-                length = point.points.length
-                for (i = 0; i < point.points.length; i++) {
-                    sumlat += parseFloat(point.points[i].latitude);
-                    sumlong += parseFloat(point.points[i].longitude);
-                }
-                // console.log(point.points)
-                // console.log("length" + length)
-                // console.log("sumlat" + sumlat)
-                // console.log("sumlong" + sumlong)
-
-                sumlat = sumlat / length;
-                sumlong = sumlong / length;
-
-                point.coord_lat = sumlat;
-                point.coord_lng = sumlong;
-            }
-        }
-    })
-
-    current_data = years_per_zoom;
+    current_data = terror_filtered;
     return (true);
 }
 
+function combineObjectPoints() {
+
+}
+
 //new_data = []
-let year_filter1 = 0;
 
 function filter() {
     new_data = []
     let year = $("#year_search").val();
-    year_filter1 = 0;
+    let year_filter1 = 0;
     let year_filter2 = 0;
 
     if (year != null) {
@@ -284,35 +198,6 @@ function filter() {
         year_filter2 = $("#year_search2").val();
     }
 
-    //console.log(years_per_zoom[map.getZoom()]);
-
-
-    years_per_zoom.forEach(zoom_level => {
-        x = {}
-        for (iyear in zoom_level) {
-            let year = zoom_level[iyear]
-            if (iyear >= year_filter1 && iyear <= year_filter2) {
-                x[iyear] = year
-                //console.log(current_zoom[iyear])
-            }
-        }
-        new_data.push(x)
-    }
-
-    );
-    console.log(years_per_zoom)
-    console.log(new_data)
-
-
-    /*
-    var newArray = homes.filter(function (el) {
-        return el.price <= 1000 &&
-            el.sqft >= 500 &&
-            el.num_of_beds >= 2 &&
-            el.num_of_baths >= 2.5;
-    })
-*/
-    current_data = new_data;
     addMarkers(current_data);
 }
 
@@ -326,36 +211,30 @@ function addMarkers(array) {
     }
     overlay = new google.maps.OverlayView();
 
-    let coords2
     const zoomlevel = map.getZoom();
 
-    coords2 = array[zoomlevel]
-    
+    years = array[zoomlevel]
 
-    if (coords2 == null) {
+    if (years == null) {
         isDrawn = true;
         return;
     }
-    console.log(year_filter1)
-    const coords = coords2[year_filter1]
-
-    if (coords == undefined) {
-        isDrawn = true;
-        return;
-    }
-
 
     data = []
 
-    Object.keys(coords).forEach(coord => {
-        const d = coords[coord]
-        const latlng = new google.maps.LatLng(d.latitude, d.longitude);
-        //var center = camera_bounds.getCenter();  // (55.04334815163844, -1.9917653831249726)
-        //console.log(coord)
-        const camera_bounds = map.getBounds();
-        if (camera_bounds.contains(latlng)) {
-            data.push(d)
-        }
+    const camera_bounds = map.getBounds();
+
+    Object.keys(years).forEach(year => {
+        yearOb = years[year]
+        Object.keys(yearOb).forEach(c => {
+            d = yearOb[c]
+            //console.log(d)
+            let latlng = new google.maps.LatLng(d.latitude, d.longitude);
+
+            if (camera_bounds.contains(latlng)) {
+                data.push(d)
+            }
+        })
     })
 
     data.sort((a, b) => a.count - b.count)
@@ -422,8 +301,8 @@ function addMarkers(array) {
                 .text(function (d) { return d.value.count; })
 
             function transform(d) {
-                let lat = parseFloat(d.value.coord_lat)
-                let lang = parseFloat(d.value.coord_lng)
+                let lat = parseFloat(d.value.plot_lat)
+                let lang = parseFloat(d.value.plot_lng)
                 const latlng = new google.maps.LatLng(lat, lang);
                 const pnt = projection.fromLatLngToDivPixel(latlng);
                 return d3.select(this)
