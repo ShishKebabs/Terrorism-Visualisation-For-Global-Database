@@ -53,10 +53,10 @@ function initMap() {
 
 
     google.maps.event.addListener(map, 'bounds_changed', function () {
-        window.clearTimeout(bounds_check_freq);
-        bounds_check_freq = window.setTimeout(function () {
+        //window.clearTimeout(bounds_check_freq);
+        //bounds_check_freq = window.setTimeout(function () {
             addMarkers();
-        }, 20);
+        //}, 20);
     });
 }
 
@@ -176,7 +176,7 @@ function loadData() {
     });
 
     //console.log(terror)
-    const max_zoom = 8;
+    const max_zoom = 25;
 
     for (i = max_zoom; i >= 0; i--) {
         data_per_zoom[i] = terrorFiltered
@@ -190,14 +190,14 @@ function loadData() {
         }
         else if (i <= 3) {
            //node_merge_amount += 2;
-           node_merge_amount += 4;
+           node_merge_amount += 3;
         }
         else if (i <= 5) {
             //node_merge_amount += 7;
-            node_merge_amount += 3;
+            node_merge_amount += 2;
         }
         else if (i <= 7) {
-            node_merge_amount += 2;
+            node_merge_amount += 1;
             //node_merge_amount += 1;
         }
 
@@ -234,7 +234,10 @@ function loadData() {
             }
             coords[search_coord_string].points.push(d)
             coords[search_coord_string].count += 1;
+
+            return years;
         });
+
         years_per_zoom[i] = years
 
     }
@@ -452,11 +455,10 @@ function createChart() {
         }
         years[t.iyear].count +=1;
     });
-    console.log(years);
-    const col1 = Object.keys(years).map(y => {
+    let col1 = Object.keys(years).map(y => {
         return y
     });
-    const col2 = Object.keys(years).map(y => {
+    let col2 = Object.keys(years).map(y => {
         return years[y].count
     });
 
@@ -464,33 +466,117 @@ function createChart() {
 
     //console.log(x);
 
-    const d1 = ['data1']
+    //const d1 = ['data1']
+    //const d2 = Object.keys(years)
+    //const d4 = d1.concat(d2)
 
-    const d2 = Object.keys(years)
-
-    const d4 = d1.concat(d2)
-
-    console.log(d4)
+    //console.log(d4)
 
     var chart = c3.generate({
-        bindto: '#chart',
+        bindto: '#chart_year_attacks',
         data: {
             x: 'data1',
           columns: [
             ['data1', ...col1],
             ['data2', ...col2]
           ]
-        },
-        // axis: {
-        //     x: {
-        //         type: 'timeseries',
-        //         tick: {
-        //             // this also works for non timeseries data
-        //             //values: ['2013-01-05', '2013-01-10']
-        //         }
-        //     }
-        // }
+        }
     });
+
+
+
+
+
+
+
+    countries = {}
+
+    terror.forEach(t => {
+        if(countries.hasOwnProperty(t.country_txt) == false) {
+            countries[t.country_txt] = {country : t.country_txt,count:0}
+        }
+        countries[t.country_txt].count +=1;
+    });
+
+    tempData = []
+    tempData = Object.keys(countries).map(c => {
+        //thing = countries[c];
+        return countries[c];
+    })
+    
+    tempData.sort((a, b) => b.count - a.count)
+    tempData = tempData.slice(0,25);
+
+    console.log(tempData)
+    col1 = tempData.map(y => {
+        return y.country
+    });
+    col2 = tempData.map(y => {
+        return y.count
+    });
+
+
+
+
+    console.log(col1)
+    console.log(col2)
+
+    var chart = c3.generate({
+        bindto: '#chart_country_attacks',
+        data: {
+            x : 'x',
+            labels: true,
+          columns: [
+            ['x', ...col1],
+            ['data2', ...col2]
+          ],
+          
+        type: 'bar'
+    },
+    axis: {
+        x: {
+            type: 'category',
+            tick: {
+                rotate: 50,
+                multiline: false
+            },
+        }
+    },
+
+    });
+
+
+
+    months = {}
+
+    terror.forEach(t => {
+        if(months.hasOwnProperty(t.imonth) === false) {
+            months[t.imonth] = {count:0}
+        }
+        months[t.imonth].count +=1;
+    });
+    col1 = Object.keys(months).map(y => {
+        return y
+    });
+    col2 = Object.keys(months).map(y => {
+        return months[y].count
+    });
+
+    var chart = c3.generate({
+        bindto: '#chart_month_attacks',
+        data: {
+            x: 'data1',
+          columns: [
+            ['data1', ...col1],
+            ['data2', ...col2]
+          ]
+        }
+    });
+
+
+
+
+
 }
 
 function createBar1SVG() {
