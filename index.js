@@ -7,10 +7,10 @@ let timeline_timer = undefined;
 let isDrawn = true;
 let update_timeline_freq = 10;
 let bounds_check_freq = undefined;
-const terror_filtered = []
-const terror_per_zoom = []
-const years_per_zoom = []
-let current_data = []
+let terror_filtered = []
+//const terror_per_zoom = []
+//const years_per_zoom = []
+let clusters = []
 /* 
 
 In Add markers, only push variables to data which fall within the camera coordinates
@@ -28,11 +28,14 @@ In Add markers, only push variables to data which fall within the camera coordin
 } */
 d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
-    if (loadData(data)) {
-        if (map != null) {
-            addMarkers(current_data);
-            createChart();
-        }
+
+    console.log("File load complete")
+
+    loadData(data)
+
+    if (map != null) {
+        addMarkers();
+        createChart();
     }
 });
 
@@ -53,7 +56,7 @@ function initMap() {
     google.maps.event.addListener(map, 'bounds_changed', function () {
         //window.clearTimeout(bounds_check_freq);
         //bounds_check_freq = window.setTimeout(function () {
-        addMarkers(current_data);
+        addMarkers();
         //}, 20);
     });
 }
@@ -73,7 +76,7 @@ $(document).ready(() => {
     $("#yearSlider").val(year_filter);
     $("#yearSlider").change(e => {
         year_filter = e.target.value;
-        addMarkers(years_per_zoom);
+        addMarkers();
         console.log(year_filter);
     });
     $("#playPause").click(() => {
@@ -150,7 +153,7 @@ function myTimer() {
                 year_filter = $("#yearSlider").prop('min');
             }
             $("#yearSlider").val(year_filter);
-            addMarkers(years_per_zoom);
+            addMarkers();
             year_filter++;
         }
         timeline_iteration++;
@@ -160,34 +163,56 @@ function myTimer() {
 //each loop store all the different filterings
 
 
-
-
 function loadData(terror) {
     //console.log(terror)
-    terror.forEach(d => {
+
+    terror_filtered = terror.filter(d => {
         const { iyear, country, city, latitude, longitude } = d;
         //data filtering 
         if (!latitude || !longitude || !iyear) {
-            return;
+            return false;
         }
-        terror_filtered.push(d)
-    });
+        return true;
+    })//.slice(0,10000)
 
-    current_data = terror_filtered;
-    return (true);
+    for(let clustersIndex = 1; clustersIndex <= 2048; clustersIndex *= 2) {
+        const modulo = clustersIndex/256;
+
+        const cluster = clusterRawData(terror_filtered,modulo)
+
+        clusters[clustersIndex] = cluster
+    }
+
+    console.log("Cluster load complete")
 }
 
-function combineObjectPoints() {
+function clusterRawData(input,modulo) {
+    return input.reduce((clusters,point) => {
+        const { latitude,longitude } = point;
 
+        const cluster_latitude = latitude - latitude%modulo
+        const cluster_longitude = longitude - longitude%modulo
+
+        const cluster_index = cluster_latitude+","+cluster_longitude
+
+        if(clusters.hasOwnProperty(cluster_index) === false) {
+            clusters[cluster_index] = []
+            //console.log("Creating cluster index",cluster_index)
+        }
+
+        clusters[cluster_index].push(point)
+
+        return clusters;
+    },{})
 }
 
-//new_data = []
+let year_filter1 = null;
+let year_filter2 = null;
 
 function filter() {
     new_data = []
     let year = $("#year_search").val();
-    let year_filter1 = 0;
-    let year_filter2 = 0;
+
 
     if (year != null) {
         year_filter1 = $("#year_search").val();
@@ -198,11 +223,38 @@ function filter() {
         year_filter2 = $("#year_search2").val();
     }
 
-    addMarkers(current_data);
+    addMarkers();
 }
 
+function zoomLevelToClusterLevel(zoomLevel) {
+    console.log("Zoom Level in:",zoomLevel)
 
-function addMarkers(array) {
+    //3 => 32
+    //4 => 16
+    //5 => 8
+    //6 => 4
+    //7 => 2
+    //8 => 1
+    //const clusterLevel = Math.floor((1/zoomLevel) * 64)
+
+    //const clusterLevel = Math.floor(7.1076 + 0.9710 * Math.log(zoomLevel))
+
+    const ZOOM_LEVELS = 14
+    const A = Math.pow(2,ZOOM_LEVELS)
+
+    const clusterLevel = Math.floor(A * Math.pow(0.5,zoomLevel))
+
+    console.log("Cluster level out:",clusterLevel)
+
+    return clusterLevel
+}
+
+function addMarkers() {
+    if(clusters.length === 0) {
+        console.log("Called addMarkers before data load")
+        return;
+    }
+
     isDrawn = false;
     //disableMap(true);
     if (overlay != null && map != null) {
@@ -213,31 +265,70 @@ function addMarkers(array) {
 
     const zoomlevel = map.getZoom();
 
-    years = array[zoomlevel]
+    const clusterLevel = zoomLevelToClusterLevel(zoomlevel)
 
-    if (years == null) {
-        isDrawn = true;
+    let data = clusters[clusterLevel]
+
+    if(data === undefined) {
+        console.log("Data undefined")
         return;
     }
 
-    data = []
-
     const camera_bounds = map.getBounds();
+        
+    data = Object.keys(data)
+        .filter(latlng => {
+            const latlng_split = latlng.split(",")
 
-    Object.keys(years).forEach(year => {
-        yearOb = years[year]
-        Object.keys(yearOb).forEach(c => {
-            d = yearOb[c]
-            //console.log(d)
-            let latlng = new google.maps.LatLng(d.latitude, d.longitude);
+            const lat = latlng_split[0]
+            const lng = latlng_split[1]
 
-            if (camera_bounds.contains(latlng)) {
-                data.push(d)
+            
+            let google_LatLng = new google.maps.LatLng(lat, lng);
+            if (camera_bounds.contains(google_LatLng)) {
+                //console.log(lat,lng,"inbounds")
+                return true;
             }
+
+            //console.log(lat,lng,"outbounds")
+            return false;
         })
-    })
+        .reduce((rows,key) => {
+            const cluster_points = data[key].filter(d => {
+                const {iyear} = d
+
+                if (year_filter1 !== null &&
+                    year_filter2 != null &&
+                    year_filter1 <= iyear && 
+                    year_filter2 >= iyear
+                ) {
+                    return true;
+                }
+
+                if(year_filter == iyear) {
+                    return true;
+                }
+                return false;
+            })
+
+            if(cluster_points.length === 0) {
+                return rows;
+            }
+
+            const { latitude, longitude } = cluster_points[0]
+
+            const count = cluster_points.length
+
+            return [...rows,{latitude,longitude,count,points:cluster_points}]
+        },[])
 
     data.sort((a, b) => a.count - b.count)
+
+    console.log("Marker load complete")
+
+    //console.log(camera_bounds)
+
+    //console.log(data)
 
     // Add the container when the overlay is added to the map.
     overlay.onAdd = function () {
@@ -301,8 +392,8 @@ function addMarkers(array) {
                 .text(function (d) { return d.value.count; })
 
             function transform(d) {
-                let lat = parseFloat(d.value.plot_lat)
-                let lang = parseFloat(d.value.plot_lng)
+                let lat = parseFloat(d.value.latitude)
+                let lang = parseFloat(d.value.longitude)
                 const latlng = new google.maps.LatLng(lat, lang);
                 const pnt = projection.fromLatLngToDivPixel(latlng);
                 return d3.select(this)
@@ -347,6 +438,8 @@ function node_color_d3(d) {
     return d3.hsl(color).darker(x);
 }
 function node_padding_d3(d) {
+    //return 10;
+
     let val = d.value.count
     val = Math.log2(val) * 1.5;
     if (val > 25) val = 25;
