@@ -45,6 +45,120 @@ function initMap() {
     map = new google.maps.Map(d3.select("#map").node(), {
         zoom: 4,
         center: latlng,
+        styles: [
+            {
+              "elementType": "geometry.fill",
+              "stylers": [
+                {
+                  "color": "#adadad"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.country",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "color": "#ffffff"
+                },
+                {
+                  "visibility": "on"
+                },
+                {
+                  "weight": 1
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.country",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "color": "#000000"
+                },
+                {
+                  "saturation": -75
+                },
+                {
+                  "lightness": -40
+                },
+                {
+                  "weight": 1.5
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "stylers": [
+                {
+                  "visibility": "on"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "visibility": "on"
+                },
+                {
+                  "weight": 3
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "elementType": "labels.text",
+              "stylers": [
+                {
+                  "visibility": "on"
+                }
+              ]
+            },
+            {
+              "featureType": "poi.park",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "road",
+              "stylers": [
+                {
+                  "visibility": "on"
+                }
+              ]
+            },
+            {
+              "featureType": "road",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "road.highway",
+              "elementType": "labels.text",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "water",
+              "stylers": [
+                {
+                  "color": "#454545"
+                }
+              ]
+            }
+          ]
     });
 
     //google.maps.event.addListenerOnce(map, 'idle', function () {
@@ -229,22 +343,12 @@ function filter() {
 function zoomLevelToClusterLevel(zoomLevel) {
     console.log("Zoom Level in:",zoomLevel)
 
-    //3 => 32
-    //4 => 16
-    //5 => 8
-    //6 => 4
-    //7 => 2
-    //8 => 1
-    //const clusterLevel = Math.floor((1/zoomLevel) * 64)
-
-    //const clusterLevel = Math.floor(7.1076 + 0.9710 * Math.log(zoomLevel))
-
     const ZOOM_LEVELS = 14
     const A = Math.pow(2,ZOOM_LEVELS)
 
     const clusterLevel = Math.floor(A * Math.pow(0.5,zoomLevel))
 
-    console.log("Cluster level out:",clusterLevel)
+    //console.log("Cluster level out:",clusterLevel)
 
     return clusterLevel
 }
@@ -323,6 +427,10 @@ function addMarkers() {
         },[])
 
     data.sort((a, b) => a.count - b.count)
+    
+    const max = Math.max(...data.map(d => d.count))
+    
+    data = data.map(d=> ({ ...d, max }))
 
     console.log("Marker load complete")
 
@@ -368,7 +476,7 @@ function addMarkers() {
                     x = node_padding_d3(d)
                     return x + 3
                 })
-                .style("fill", node_color_d3)
+                .style("fill", d => node_color_d3(d))
                 .on("mouseover", handleMouseOver)
                 .on("mouseout", handleMouseOut)
                 .on("click", handle_node_click_open_table)
@@ -421,7 +529,7 @@ function handleMouseOver() {
             x = node_padding_d3(d);
             return (x * 1.1)
         })
-        .style("fill", "orange");
+        .style("fill", "black");
 }
 
 var handleMouseOut = function () {
@@ -433,9 +541,24 @@ var handleMouseOut = function () {
 
 
 function node_color_d3(d) {
-    const color = d3.rgb(255, 40, 40);
-    const x = Math.floor((d.value.count) * 0.005);
-    return d3.hsl(color).darker(x);
+    const {max, count} = d.value;
+    //const color = d3.rgb(255, 40, 40);
+    //const x = Math.floor((d.value.count) * 0.005);
+    //return d3.hsl(color).darker(x);
+    if(count <= max*0.05) {
+        return d3.rgb(0, 160, 0)
+    } else if (count <= max*0.2) {
+        return d3.rgb(234, 117, 0)
+    } else {
+        return d3.rgb(230, 0,0)
+    }
+
+    const color = d3.rgb(20, 0, 0);
+    let x = Math.floor((d.value.count) * 0.05);
+    if (x > 1) {
+        x = 1;
+    }
+    return color;
 }
 function node_padding_d3(d) {
     //return 10;
@@ -503,11 +626,6 @@ function createChart() {
             ]
         }
     });
-
-
-
-
-
 
 
     countries = {}
@@ -593,6 +711,58 @@ function createChart() {
             ]
         }
     });
+
+
+
+    tempData = []
+    tempData = Object.keys(countries).map(c => {
+        //thing = countries[c];
+        return countries[c];
+    })
+
+    tempData.sort((a, b) => b.count - a.count)
+    tempData = tempData.slice(0, 25);
+
+    //console.log(tempData)
+    col1 = tempData.map(y => {
+        return y.country
+    });
+    col2 = tempData.map(y => {
+        return y.count
+    });
+
+
+
+
+    //console.log(col1)
+    //console.log(col2)
+
+    // let chart = c3.generate({
+    //     bindto: '#chart_group_attacks',
+    //     data: {
+    //         x: 'x',
+    //         labels: true,
+    //         columns: [
+    //             ['x', ...col1],
+    //             ['data2', ...col2]
+    //         ],
+
+    //         type: 'bar'
+    //     },
+    //     axis: {
+    //         x: {
+    //             type: 'category',
+    //             tick: {
+    //                 rotate: 50,
+    //                 multiline: false
+    //             },
+    //         }
+    //     },
+
+    // });
+
+
+
 
 
 

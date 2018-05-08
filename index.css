@@ -34,7 +34,7 @@
   
   .attacks circle {
     fill: pink;
-    stroke: black;
+    /* stroke: black; */
     stroke-width: 1px;
   }
 
