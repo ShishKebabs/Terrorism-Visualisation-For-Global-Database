@@ -32,7 +32,7 @@ d3.csv("/data/terrorism.csv", function (error, data) {
 
     if (map != null) {
         addMarkers();
-        createChart();
+        createCharts();
     }
 });
 
@@ -394,7 +394,7 @@ function initMap() {
               "featureType": "water",
               "stylers": [
                 {
-                  "color": "#000028"
+                  "color": "#000040"
                 }
               ]
             }
@@ -499,11 +499,11 @@ $(document).ready(() => {
             { "title": "City", data: 'city' },
             { "title": "Latitude", data: 'latitude' },
             { "title": "Longitude", data: 'longitude' },
-            { "title": "Attack Type", data: 'attacktype1_txt' },
             { "title": "Target", data: 'targtype1_txt' },
             { "title": "Target Type", data: 'target1' },
-            { "title": "Nationality", data: 'natlty1_txt' },
-            { "title": "Group", data: 'gname' }
+            { "title": "Attack Type", data: 'attacktype1_txt' },
+            { "title": "Group", data: 'gname' },
+            { "title": "Nationality", data: 'natlty1_txt' }
         ]
     });
 
@@ -639,7 +639,6 @@ function addMarkers() {
     const zoomlevel = map.getZoom();
 
     const clusterLevel = zoomLevelToClusterLevel(zoomlevel)
-
     let data = clusters[clusterLevel]
 
     if(data === undefined) {
@@ -857,7 +856,7 @@ function closeTable() {
 }
 
 
-function createChart() {
+function createCharts() {
     let years = {}
     terror_filtered.forEach(t => {
         if (years.hasOwnProperty(t.iyear) === false) {
