@@ -48,31 +48,16 @@
 			<div class="container">
 				<div class="row">
 					<div class="col top_bar_content d-flex flex-row align-items-center justify-content-start">
-						<div class="event_timer">
-							<span>Next Big Event:</span>
-							<ul class="timer">
-								<li class="d-inline-flex">
-									<div id="day" class="timer_num">03</div>
-									<div class="timer_unit">Days</div>
-								</li>
-								<li class="d-inline-flex">
-									<div id="hour" class="timer_num">15</div>
-									<div class="timer_unit">Hours</div>
-								</li>
-								<li class="d-inline-flex">
-									<div id="minute" class="timer_num">45</div>
-									<div class="timer_unit">Minutes</div>
-								</li>
-								<li class="d-inline-flex">
-									<div id="second" class="timer_num">23</div>
-									<div class="timer_unit">Seconds</div>
-								</li>
-							</ul>
-						</div>
-						<div class="donations_button ml-auto">
-							<a href="#">Send Donations</a>
-						</div>
-					</div>
+                        <div class="button ml-auto">
+                            <a href="#" id="slowDown">Slow Down</a>
+                        </div>
+                        <div class="button ml-auto2">
+                            <a href="#" id="playPause">Play/Pause</a>
+                        </div>
+                        <div class="button ml-auto3">
+                            <a href="#" id="fastForward">Fast Forward</a>
+                        </div>
+                    </div>
 				</div>
 			</div>
 		</div>
@@ -84,21 +69,22 @@
 				<div class="row">
 					<div class="col">
 						<div class="header_content d-flex flex-row align-items-center justify-content-start">
+							<div id="year_slider" ">
+                                <!-- <button id="slowDown" type="button"> << </button>
+                                <button id="playPause" type="button">Play/Pause</button>
+                                <button id="fastForward" type="button"> >> </button> -->
+                                Timeline
+                                <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
+                                
+                                Year Range:
+                                <input type="search" id="year_search" placeholder="YYYY" value = "1970"/>
+                                <input type="search" id="year_search2" placeholder="YYYY" value = "2016"/>
+                        
+                                <button class="button2" onclick="filter()">Filter</button>
+                                <p>Current Year: <span id="yearval"></span></p>
 
-								<div id="year_slider">
-									<button id="slowDown" type="button"> << </button>
-									<button id="playPause" type="button">Play/Pause</button>
-									<button id="fastForward" type="button"> >> </button>
-									Years
-									<input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
-									Year Range
-									<input type="search" id="year_search" placeholder="1970 - 2016" value = "2000">
-									<input type="search" id="year_search2" placeholder="1970 - 2016" value = "2000">
-							
-									<button onclick="filter()">Apply Filter</button>
-							
-								</div>
 
+							</div>
 						</div>
 					</div>
 				</div>
@@ -273,12 +259,7 @@
 			<div class="row">
 				<div class="col">
 					<div class="newsletter_content d-flex flex-lg-row flex-column align-items-center justify-content-start">
-						<div class="newsletter_title">Subscribe to our newsletter</div>
-						<div class="newsletter_form_container ml-lg-auto">
-							<form action="#" id="newsletter_form" class="newsletter_form">
-								<input type="email" class="newsletter_input" placeholder="Your email" required="required">
-								<button id="newsletter_button" class="newsletter_button">Subscribe</button>
-							</form>
+						<div class="newsletter_title">Terror Visualisation</div>
 						</div>
 					</div>
 				</div>
@@ -295,17 +276,11 @@
 				<!-- Footer Column -->
 				<div class="col-lg-3 footer_col">
 					<div class="footer_contact">
-						<div class="footer_title">Contact Us</div>
+						<div class="footer_title">Contact</div>
 						<ul>
-							<li><span>Address: </span>1481 Creekside Lane Avila Beach, CA 93424</li>
-							<li class="footer_contact_phone">
-								<span>Phone: </span>
-								<div>
-									<div> +53 345 7953 32453</div>
-									<div> +53 345 7557 822112</div>
-								</div>
-							</li>
-							<li><span>Email: </span>yourmail@gmail.com</li>
+                            <li><span>Name: </span>Liam Davis</li>
+							<li><span>Institution:<br> </span>University of Nottingham</li>
+							<li><span>Email: </span>psyld@nottingham.ac.uk</li>
 						</ul>
 					</div>
 				</div>

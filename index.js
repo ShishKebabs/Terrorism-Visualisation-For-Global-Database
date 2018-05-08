@@ -6,10 +6,7 @@ let is_play_btn = true;
 let timeline_timer = undefined;
 let isDrawn = true;
 let update_timeline_freq = 10;
-let bounds_check_freq = undefined;
 let terror_filtered = []
-//const terror_per_zoom = []
-//const years_per_zoom = []
 let clusters = []
 /* 
 
@@ -45,7 +42,7 @@ function initMap() {
     map = new google.maps.Map(d3.select("#map").node(), {
         zoom: 4,
         center: latlng,
-        styles: [
+        styles: /*[
             {
               "elementType": "geometry.fill",
               "stylers": [
@@ -158,6 +155,249 @@ function initMap() {
                 }
               ]
             }
+          ]*/
+          [
+            {
+              "elementType": "geometry.fill",
+              "stylers": [
+                {
+                  "color": "#adadad"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.country",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "color": "#cecece"
+                },
+                {
+                  "lightness": 55
+                },
+                {
+                  "weight": 1
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.country",
+              "elementType": "labels.text.fill",
+              "stylers": [
+                {
+                  "color": "#c8c8c8"
+                },
+                {
+                  "saturation": -100
+                },
+                {
+                  "lightness": 35
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.country",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "color": "#000000"
+                },
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.land_parcel",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "stylers": [
+                {
+                  "visibility": "on"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "elementType": "labels.text.fill",
+              "stylers": [
+                {
+                  "color": "#cacaca"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.locality",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "visibility": "off"
+                },
+                {
+                  "weight": 0.5
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.neighborhood",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.province",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "color": "#e4e4e4"
+                }
+              ]
+            },
+            {
+              "featureType": "administrative.province",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "color": "#d2d2d2"
+                },
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "landscape",
+              "elementType": "labels.text.fill",
+              "stylers": [
+                {
+                  "color": "#dddddd"
+                }
+              ]
+            },
+            {
+              "featureType": "landscape",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "poi",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "poi",
+              "elementType": "labels.text.fill",
+              "stylers": [
+                {
+                  "color": "#ffffff"
+                }
+              ]
+            },
+            {
+              "featureType": "poi",
+              "elementType": "labels.text.stroke",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "poi.park",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "road",
+              "stylers": [
+                {
+                  "saturation": 5
+                },
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "road",
+              "elementType": "labels",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "road.highway",
+              "stylers": [
+                {
+                  "saturation": -35
+                },
+                {
+                  "lightness": 5
+                },
+                {
+                  "weight": 0.5
+                }
+              ]
+            },
+            {
+              "featureType": "road.highway",
+              "elementType": "geometry",
+              "stylers": [
+                {
+                  "saturation": -30
+                },
+                {
+                  "weight": 0.5
+                }
+              ]
+            },
+            {
+              "featureType": "road.highway",
+              "elementType": "labels.text",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "transit",
+              "stylers": [
+                {
+                  "visibility": "off"
+                }
+              ]
+            },
+            {
+              "featureType": "water",
+              "stylers": [
+                {
+                  "color": "#000028"
+                }
+              ]
+            }
           ]
     });
 
@@ -188,12 +428,23 @@ $(document).ready(() => {
 
     year_filter = $("#yearSlider").prop('min');
     $("#yearSlider").val(year_filter);
+    $(yearval).text($("#yearSlider").val());
+
     $("#yearSlider").change(e => {
+        year_filter1 = null;
+        year_filter2 = null;
+        $(yearval).text($("#yearSlider").val());
+
         year_filter = e.target.value;
         addMarkers();
         console.log(year_filter);
+        
     });
     $("#playPause").click(() => {
+    year_filter1 = null;
+    year_filter2 = null;
+
+
         if (is_play_btn) {
             timeline_timer = setInterval(myTimer, 10);
             is_play_btn = false;
@@ -261,6 +512,7 @@ $(document).ready(() => {
 let timeline_iteration = 0;
 function myTimer() {
     if (isDrawn) {
+        $(yearval).text($("#yearSlider").val());
         if (timeline_iteration >= update_timeline_freq) {
             timeline_iteration = 0;
             if (year_filter > $("#yearSlider").prop('max')) {
@@ -320,28 +572,45 @@ function clusterRawData(input,modulo) {
     },{})
 }
 
-let year_filter1 = null;
-let year_filter2 = null;
+let year_filter1 = undefined;
+let year_filter2 = undefined;
 
 function filter() {
-    new_data = []
-    let year = $("#year_search").val();
+    year_filter1 = null;
+    year_filter2 = null;
+    const year = parseInt($("#year_search").val());
+    const year2 = parseInt($("#year_search2").val());
 
-
-    if (year != null) {
-        year_filter1 = $("#year_search").val();
+    if(isNaN(year) && isNaN(year2)) {
+        return;
     }
 
-    let year2 = $("#year_search2").val();
-    if (year != null) {
-        year_filter2 = $("#year_search2").val();
+    if(isNaN(year) && !isNaN(year2)) {
+        year_filter = year2
+        $("#yearSlider").val(year_filter);  
+        $(yearval).text(year_filter); 
+    } else if(!isNaN(year) && isNaN(year2)) {
+        year_filter = year
+        $("#yearSlider").val(year_filter);   
+        $(yearval).text(year_filter);
+    } else {
+        year_filter1 = year;
+        year_filter2 = year2;
+        $(yearval).text("Range");   
+        timeline_timer = clearInterval(timeline_timer);
+
+        is_play_btn = true;
     }
+
+
+
+
 
     addMarkers();
 }
 
 function zoomLevelToClusterLevel(zoomLevel) {
-    console.log("Zoom Level in:",zoomLevel)
+    //console.log("Zoom Level in:",zoomLevel)
 
     const ZOOM_LEVELS = 14
     const A = Math.pow(2,ZOOM_LEVELS)
@@ -383,17 +652,14 @@ function addMarkers() {
     data = Object.keys(data)
         .filter(latlng => {
             const latlng_split = latlng.split(",")
-
             const lat = latlng_split[0]
             const lng = latlng_split[1]
 
-            
             let google_LatLng = new google.maps.LatLng(lat, lng);
             if (camera_bounds.contains(google_LatLng)) {
                 //console.log(lat,lng,"inbounds")
                 return true;
             }
-
             //console.log(lat,lng,"outbounds")
             return false;
         })
@@ -402,7 +668,7 @@ function addMarkers() {
                 const {iyear} = d
 
                 if (year_filter1 !== null &&
-                    year_filter2 != null &&
+                    year_filter2 !== null &&
                     year_filter1 <= iyear && 
                     year_filter2 >= iyear
                 ) {
@@ -605,16 +871,6 @@ function createChart() {
     let col2 = Object.keys(years).map(y => {
         return years[y].count
     });
-
-    // {year:y, ...years[y] }
-
-    //console.log(x);
-
-    //const d1 = ['data1']
-    //const d2 = Object.keys(years)
-    //const d4 = d1.concat(d2)
-
-    //console.log(d4)
 
     var chart = c3.generate({
         bindto: '#chart_year_attacks',
