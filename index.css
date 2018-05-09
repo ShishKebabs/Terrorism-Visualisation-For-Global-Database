@@ -9,9 +9,13 @@
     text-anchor: end;
   }
 
-  .chart ::-webkit-scrollbar{
+.chart ::-webkit-scrollbar{
   /* width:0; */
   
+}
+
+.sermon h2 {
+  color:#ffffff;
 }
 
 

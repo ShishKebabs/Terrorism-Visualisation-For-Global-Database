@@ -8,32 +8,19 @@ let isDrawn = true;
 let update_timeline_freq = 10;
 let terror_filtered = []
 let clusters = []
-/* 
-
-In Add markers, only push variables to data which fall within the camera coordinates
 
 
-*/
-
-/* function createGoogleMapPointer(lat, lng) {
-    var myLatLng = { lat, lng };
-    var marker = new google.maps.Marker({
-        position: myLatLng,
-        map: map,
-        title: 'Hello World!'
-    });
-} */
 d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
 
     console.log("File load complete")
-
+    console.time('loadData');
     loadData(data)
 
-    if (map != null) {
-        addMarkers();
-        createCharts();
-    }
+    console.time('createCharts');
+    createCharts();
+    console.timeEnd('createCharts');
+
 });
 
 
@@ -42,377 +29,252 @@ function initMap() {
     map = new google.maps.Map(d3.select("#map").node(), {
         zoom: 4,
         center: latlng,
-        styles: /*[
+        styles: [
             {
-              "elementType": "geometry.fill",
-              "stylers": [
-                {
-                  "color": "#adadad"
-                }
-              ]
+                "elementType": "geometry.fill",
+                "stylers": [
+                    {
+                        "color": "#adadad"
+                    }
+                ]
             },
             {
-              "featureType": "administrative.country",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "color": "#ffffff"
-                },
-                {
-                  "visibility": "on"
-                },
-                {
-                  "weight": 1
-                }
-              ]
+                "featureType": "administrative.country",
+                "elementType": "labels",
+                "stylers": [
+                    {
+                        "color": "#cecece"
+                    },
+                    {
+                        "lightness": 55
+                    },
+                    {
+                        "weight": 1
+                    }
+                ]
             },
             {
-              "featureType": "administrative.country",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "color": "#000000"
-                },
-                {
-                  "saturation": -75
-                },
-                {
-                  "lightness": -40
-                },
-                {
-                  "weight": 1.5
-                }
-              ]
+                "featureType": "administrative.country",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                    {
+                        "color": "#c8c8c8"
+                    },
+                    {
+                        "saturation": -100
+                    },
+                    {
+                        "lightness": 35
+                    }
+                ]
             },
             {
-              "featureType": "administrative.locality",
-              "stylers": [
-                {
-                  "visibility": "on"
-                }
-              ]
+                "featureType": "administrative.country",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "color": "#000000"
+                    },
+                    {
+                        "visibility": "off"
+                    }
+                ]
             },
             {
-              "featureType": "administrative.locality",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "visibility": "on"
-                },
-                {
-                  "weight": 3
-                }
-              ]
+                "featureType": "administrative.land_parcel",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
             },
             {
-              "featureType": "administrative.locality",
-              "elementType": "labels.text",
-              "stylers": [
-                {
-                  "visibility": "on"
-                }
-              ]
+                "featureType": "administrative.locality",
+                "stylers": [
+                    {
+                        "visibility": "on"
+                    }
+                ]
             },
             {
-              "featureType": "poi.park",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
+                "featureType": "administrative.locality",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                    {
+                        "color": "#cacaca"
+                    }
+                ]
             },
             {
-              "featureType": "road",
-              "stylers": [
-                {
-                  "visibility": "on"
-                }
-              ]
+                "featureType": "administrative.locality",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    },
+                    {
+                        "weight": 0.5
+                    }
+                ]
             },
             {
-              "featureType": "road",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
+                "featureType": "administrative.neighborhood",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
             },
             {
-              "featureType": "road.highway",
-              "elementType": "labels.text",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
+                "featureType": "administrative.province",
+                "elementType": "labels",
+                "stylers": [
+                    {
+                        "color": "#e4e4e4"
+                    }
+                ]
             },
             {
-              "featureType": "water",
-              "stylers": [
-                {
-                  "color": "#454545"
-                }
-              ]
+                "featureType": "administrative.province",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "color": "#d2d2d2"
+                    },
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "landscape",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                    {
+                        "color": "#dddddd"
+                    }
+                ]
+            },
+            {
+                "featureType": "landscape",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "poi",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "poi",
+                "elementType": "labels.text.fill",
+                "stylers": [
+                    {
+                        "color": "#ffffff"
+                    }
+                ]
+            },
+            {
+                "featureType": "poi",
+                "elementType": "labels.text.stroke",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "poi.park",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "road",
+                "stylers": [
+                    {
+                        "saturation": 5
+                    },
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "road",
+                "elementType": "labels",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "road.highway",
+                "stylers": [
+                    {
+                        "saturation": -35
+                    },
+                    {
+                        "lightness": 5
+                    },
+                    {
+                        "weight": 0.5
+                    }
+                ]
+            },
+            {
+                "featureType": "road.highway",
+                "elementType": "geometry",
+                "stylers": [
+                    {
+                        "saturation": -30
+                    },
+                    {
+                        "weight": 0.5
+                    }
+                ]
+            },
+            {
+                "featureType": "road.highway",
+                "elementType": "labels.text",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "transit",
+                "stylers": [
+                    {
+                        "visibility": "off"
+                    }
+                ]
+            },
+            {
+                "featureType": "water",
+                "stylers": [
+                    {
+                        "color": "#000030"
+                    }
+                ]
             }
-          ]*/
-          [
-            {
-              "elementType": "geometry.fill",
-              "stylers": [
-                {
-                  "color": "#adadad"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.country",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "color": "#cecece"
-                },
-                {
-                  "lightness": 55
-                },
-                {
-                  "weight": 1
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.country",
-              "elementType": "labels.text.fill",
-              "stylers": [
-                {
-                  "color": "#c8c8c8"
-                },
-                {
-                  "saturation": -100
-                },
-                {
-                  "lightness": 35
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.country",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "color": "#000000"
-                },
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.land_parcel",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.locality",
-              "stylers": [
-                {
-                  "visibility": "on"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.locality",
-              "elementType": "labels.text.fill",
-              "stylers": [
-                {
-                  "color": "#cacaca"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.locality",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "visibility": "off"
-                },
-                {
-                  "weight": 0.5
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.neighborhood",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.province",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "color": "#e4e4e4"
-                }
-              ]
-            },
-            {
-              "featureType": "administrative.province",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "color": "#d2d2d2"
-                },
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "landscape",
-              "elementType": "labels.text.fill",
-              "stylers": [
-                {
-                  "color": "#dddddd"
-                }
-              ]
-            },
-            {
-              "featureType": "landscape",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "poi",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "poi",
-              "elementType": "labels.text.fill",
-              "stylers": [
-                {
-                  "color": "#ffffff"
-                }
-              ]
-            },
-            {
-              "featureType": "poi",
-              "elementType": "labels.text.stroke",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "poi.park",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "road",
-              "stylers": [
-                {
-                  "saturation": 5
-                },
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "road",
-              "elementType": "labels",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "road.highway",
-              "stylers": [
-                {
-                  "saturation": -35
-                },
-                {
-                  "lightness": 5
-                },
-                {
-                  "weight": 0.5
-                }
-              ]
-            },
-            {
-              "featureType": "road.highway",
-              "elementType": "geometry",
-              "stylers": [
-                {
-                  "saturation": -30
-                },
-                {
-                  "weight": 0.5
-                }
-              ]
-            },
-            {
-              "featureType": "road.highway",
-              "elementType": "labels.text",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "transit",
-              "stylers": [
-                {
-                  "visibility": "off"
-                }
-              ]
-            },
-            {
-              "featureType": "water",
-              "stylers": [
-                {
-                  "color": "#000040"
-                }
-              ]
-            }
-          ]
+        ]
     });
 
-    //google.maps.event.addListenerOnce(map, 'idle', function () {
-    //currentGMapZoom = map.getZoom();
-    //camera_bounds = map.getBounds(); 
-    //});
 
-
-    google.maps.event.addListener(map, 'bounds_changed', function () {
-        //window.clearTimeout(bounds_check_freq);
-        //bounds_check_freq = window.setTimeout(function () {
-        addMarkers();
-        //}, 20);
-    });
 }
 
 function disableMap(disable) {
@@ -424,6 +286,24 @@ function disableMap(disable) {
 }
 
 
+$(function () {
+    $('input[name="rad"]').click(function () {
+        var $radio = $(this);
+
+        // if this was previously checked
+        if ($radio.data('waschecked') == true) {
+            $radio.prop('checked', false);
+            $radio.data('waschecked', false);
+        }
+        else
+            $radio.data('waschecked', true);
+
+        // remove was checked from other radios
+        $radio.siblings('input[name="rad"]').data('waschecked', false);
+    });
+});
+
+
 $(document).ready(() => {
 
     year_filter = $("#yearSlider").prop('min');
@@ -431,18 +311,20 @@ $(document).ready(() => {
     $(yearval).text($("#yearSlider").val());
 
     $("#yearSlider").change(e => {
+        year_filter = null;
+        year_filter = e.target.value;
+        $(yearval).text(year_filter);
+
         year_filter1 = null;
         year_filter2 = null;
-        $(yearval).text($("#yearSlider").val());
 
-        year_filter = e.target.value;
+        //console.log(year_filter);
         addMarkers();
-        console.log(year_filter);
-        
+
     });
     $("#playPause").click(() => {
-    year_filter1 = null;
-    year_filter2 = null;
+        year_filter1 = null;
+        year_filter2 = null;
 
 
         if (is_play_btn) {
@@ -512,13 +394,13 @@ $(document).ready(() => {
 let timeline_iteration = 0;
 function myTimer() {
     if (isDrawn) {
-        $(yearval).text($("#yearSlider").val());
         if (timeline_iteration >= update_timeline_freq) {
             timeline_iteration = 0;
             if (year_filter > $("#yearSlider").prop('max')) {
                 year_filter = $("#yearSlider").prop('min');
             }
             $("#yearSlider").val(year_filter);
+            $(yearval).text(year_filter);
             addMarkers();
             year_filter++;
         }
@@ -531,7 +413,6 @@ function myTimer() {
 
 function loadData(terror) {
     //console.log(terror)
-
     terror_filtered = terror.filter(d => {
         const { iyear, country, city, latitude, longitude } = d;
         //data filtering 
@@ -539,29 +420,40 @@ function loadData(terror) {
             return false;
         }
         return true;
-    })//.slice(0,10000)
+    })
 
-    for(let clustersIndex = 1; clustersIndex <= 4096; clustersIndex *= 2) {
-        const modulo = clustersIndex/180;
 
-        const cluster = clusterRawData(terror_filtered,modulo)
+    for (let clustersIndex = 1; clustersIndex <= 4096; clustersIndex *= 2) {
+        const modulo = clustersIndex / 180;
+
+        const cluster = clusterRawData(terror_filtered, modulo)
 
         clusters[clustersIndex] = cluster
     }
 
+    console.timeEnd('loadData')
+    console.time('addMarkers')
+    addMarkers();
+    console.timeEnd('addMarkers')
+    google.maps.event.addListener(map, 'bounds_changed', function () {
+        //window.clearTimeout(bounds_check_freq);
+        //bounds_check_freq = window.setTimeout(function () {
+        addMarkers();
+        //}, 20);
+    });
     console.log("Cluster load complete")
 }
 
-function clusterRawData(input,modulo) {
-    return input.reduce((clusters,point) => {
-        const { latitude,longitude } = point;
+function clusterRawData(input, modulo) {
+    return input.reduce((clusters, point) => {
+        const { latitude, longitude } = point;
 
-        const cluster_latitude = latitude - latitude%modulo
-        const cluster_longitude = longitude - longitude%modulo
+        const cluster_latitude = latitude - latitude % modulo
+        const cluster_longitude = longitude - longitude % modulo
 
-        const cluster_index = cluster_latitude+","+cluster_longitude
+        const cluster_index = cluster_latitude + "," + cluster_longitude
 
-        if(clusters.hasOwnProperty(cluster_index) === false) {
+        if (clusters.hasOwnProperty(cluster_index) === false) {
             clusters[cluster_index] = []
             //console.log("Creating cluster index",cluster_index)
         }
@@ -569,61 +461,55 @@ function clusterRawData(input,modulo) {
         clusters[cluster_index].push(point)
 
         return clusters;
-    },{})
+    }, {})
 }
 
 let year_filter1 = undefined;
 let year_filter2 = undefined;
+taliban_filter = false;
+isis_filter = false;
 
-function filter() {
+function filterButton() {
     year_filter1 = null;
     year_filter2 = null;
+
     const year = parseInt($("#year_search").val());
     const year2 = parseInt($("#year_search2").val());
 
-    if(isNaN(year) && isNaN(year2)) {
+    if (isNaN(year) && isNaN(year2)) {
         return;
     }
 
-    if(isNaN(year) && !isNaN(year2)) {
+    if (isNaN(year) && !isNaN(year2)) {
         year_filter = year2
-        $("#yearSlider").val(year_filter);  
-        $(yearval).text(year_filter); 
-    } else if(!isNaN(year) && isNaN(year2)) {
+        $("#yearSlider").val(year_filter);
+        $(yearval).text(year_filter);
+    } else if (!isNaN(year) && isNaN(year2)) {
         year_filter = year
-        $("#yearSlider").val(year_filter);   
+        $("#yearSlider").val(year_filter);
         $(yearval).text(year_filter);
     } else {
         year_filter1 = year;
         year_filter2 = year2;
-        $(yearval).text("Range");   
+        $(yearval).text("Range");
         timeline_timer = clearInterval(timeline_timer);
 
         is_play_btn = true;
     }
-
-
-
-
-
     addMarkers();
 }
 
 function zoomLevelToClusterLevel(zoomLevel) {
     //console.log("Zoom Level in:",zoomLevel)
-
     const ZOOM_LEVELS = 14
-    const A = Math.pow(2,ZOOM_LEVELS)
-
-    const clusterLevel = Math.floor(A * Math.pow(0.5,zoomLevel))
-
+    const A = Math.pow(2, ZOOM_LEVELS)
+    const clusterLevel = Math.floor(A * Math.pow(0.5, zoomLevel))
     //console.log("Cluster level out:",clusterLevel)
-
     return clusterLevel
 }
 
 function addMarkers() {
-    if(clusters.length === 0) {
+    if (clusters.length == 0) {
         console.log("Called addMarkers before data load")
         return;
     }
@@ -641,18 +527,30 @@ function addMarkers() {
     const clusterLevel = zoomLevelToClusterLevel(zoomlevel)
     let data = clusters[clusterLevel]
 
-    if(data === undefined) {
+    if (data === undefined) {
         console.log("Data undefined")
         return;
     }
 
     const camera_bounds = map.getBounds();
-        
+
+    taliban_filter = false;
+    isis_filter = false;
+    if ($("#taliban_box").is(":checked")) {
+        taliban_filter = true;
+    }
+    else if ($("#isis_box").is(":checked")) {
+        isis_filter = true;
+    }
+
     data = Object.keys(data)
         .filter(latlng => {
             const latlng_split = latlng.split(",")
             const lat = latlng_split[0]
             const lng = latlng_split[1]
+
+
+
 
             let google_LatLng = new google.maps.LatLng(lat, lng);
             if (camera_bounds.contains(google_LatLng)) {
@@ -662,25 +560,41 @@ function addMarkers() {
             //console.log(lat,lng,"outbounds")
             return false;
         })
-        .reduce((rows,key) => {
+        .reduce((rows, key) => {
             const cluster_points = data[key].filter(d => {
-                const {iyear} = d
+                const { iyear, gname } = d
 
-                if (year_filter1 !== null &&
-                    year_filter2 !== null &&
-                    year_filter1 <= iyear && 
+                if (taliban_filter == true) {
+                    if (gname != "Taliban") {
+                        return false;
+                    }
+                }
+                if (isis_filter == true) {
+                    if (gname != "Islamic State of Iraq and the Levant (ISIL)") {
+                        return false;
+                    }
+                }
+
+
+
+                if (year_filter1 != null &&
+                    year_filter2 != null &&
+                    year_filter1 <= iyear &&
                     year_filter2 >= iyear
                 ) {
                     return true;
                 }
 
-                if(year_filter == iyear) {
+                if (year_filter == iyear) {
                     return true;
                 }
+
+
+
                 return false;
             })
 
-            if(cluster_points.length === 0) {
+            if (cluster_points.length === 0) {
                 return rows;
             }
 
@@ -688,14 +602,14 @@ function addMarkers() {
 
             const count = cluster_points.length
 
-            return [...rows,{latitude,longitude,count,points:cluster_points}]
-        },[])
+            return [...rows, { latitude, longitude, count, points: cluster_points }]
+        }, [])
 
     data.sort((a, b) => a.count - b.count)
-    
+
     const max = Math.max(...data.map(d => d.count))
-    
-    data = data.map(d=> ({ ...d, max }))
+
+    data = data.map(d => ({ ...d, max }))
 
     console.log("Marker load complete")
 
@@ -703,14 +617,12 @@ function addMarkers() {
 
     //console.log(data)
 
-    // Add the container when the overlay is added to the map.
+    // Add the container when the overlay is added
     overlay.onAdd = function () {
         layer = d3.select(this.getPanes().overlayMouseTarget)
             .append("div")
             .attr("class", "attacks")
 
-        // Draw each marker as a separate SVG element.
-        // We could use a single SVG, but what size would it have?
         overlay.draw = function () {
             var projection = this.getProjection();
 
@@ -727,8 +639,6 @@ function addMarkers() {
                     x = node_padding_d3(d)
                     return x * 2.7
                 })
-
-            //.attr("class", "marker")
 
             // Add a circle.
             var circle = marker.append("circle")
@@ -806,16 +716,16 @@ var handleMouseOut = function () {
 
 
 function node_color_d3(d) {
-    const {max, count} = d.value;
+    const { max, count } = d.value;
     //const color = d3.rgb(255, 40, 40);
     //const x = Math.floor((d.value.count) * 0.005);
     //return d3.hsl(color).darker(x);
-    if(count <= max*0.05) {
+    if (count <= max * 0.05) {
         return d3.rgb(0, 160, 0)
-    } else if (count <= max*0.2) {
+    } else if (count <= max * 0.2) {
         return d3.rgb(234, 117, 0)
     } else {
-        return d3.rgb(230, 0,0)
+        return d3.rgb(230, 0, 0)
     }
 
     const color = d3.rgb(20, 0, 0);
@@ -857,17 +767,17 @@ function closeTable() {
 
 
 function createCharts() {
-    let years = {}
+    var years = {}
     terror_filtered.forEach(t => {
-        if (years.hasOwnProperty(t.iyear) === false) {
+        if (years.hasOwnProperty(t.iyear) == false) {
             years[t.iyear] = { count: 0 }
         }
         years[t.iyear].count += 1;
     });
-    let col1 = Object.keys(years).map(y => {
+    var col1 = Object.keys(years).map(y => {
         return y
     });
-    let col2 = Object.keys(years).map(y => {
+    var col2 = Object.keys(years).map(y => {
         return years[y].count
     });
 
@@ -883,8 +793,7 @@ function createCharts() {
     });
 
 
-    countries = {}
-
+    var countries = {}
     terror_filtered.forEach(t => {
         if (countries.hasOwnProperty(t.country_txt) == false) {
             countries[t.country_txt] = { country: t.country_txt, count: 0 }
@@ -894,18 +803,17 @@ function createCharts() {
 
     tempData = []
     tempData = Object.keys(countries).map(c => {
-        //thing = countries[c];
         return countries[c];
     })
 
     tempData.sort((a, b) => b.count - a.count)
-    tempData = tempData.slice(0, 25);
+    tempData = tempData.slice(0, 20);
 
     //console.log(tempData)
-    col1 = tempData.map(y => {
+    var col1 = tempData.map(y => {
         return y.country
     });
-    col2 = tempData.map(y => {
+    var col2 = tempData.map(y => {
         return y.count
     });
 
@@ -941,6 +849,63 @@ function createCharts() {
 
 
 
+    var countries = {}
+    terror_filtered.forEach(t => {
+        if (countries.hasOwnProperty(t.country_txt) == false) {
+            countries[t.country_txt] = { country: t.country_txt, count: 0 }
+        }
+        countries[t.country_txt].count += 1;
+    });
+
+
+    tempData = []
+    tempData = Object.keys(countries).map(c => {
+        return countries[c];
+    })
+
+    tempData.sort((a, b) => a.count - b.count)
+    tempData = tempData.slice(20, 40);
+
+    //console.log(tempData)
+    var col1 = tempData.map(y => {
+        return y.country
+    });
+    var col2 = tempData.map(y => {
+        return y.count
+    });
+
+
+
+
+    //console.log(col1)
+    //console.log(col2)
+
+    var chart = c3.generate({
+        bindto: '#chart_country_noattacks',
+        data: {
+            x: 'x',
+            labels: true,
+            columns: [
+                ['x', ...col1],
+                ['data2', ...col2]
+            ],
+
+            type: 'bar'
+        },
+        axis: {
+            x: {
+                type: 'category',
+                tick: {
+                    rotate: 50,
+                    multiline: false
+                },
+            }
+        },
+
+    });
+
+
+
     months = {}
 
     terror_filtered.forEach(t => {
@@ -949,10 +914,10 @@ function createCharts() {
         }
         months[t.imonth].count += 1;
     });
-    col1 = Object.keys(months).map(y => {
+    var col1 = Object.keys(months).map(y => {
         return y
     });
-    col2 = Object.keys(months).map(y => {
+    var col2 = Object.keys(months).map(y => {
         return months[y].count
     });
 
@@ -969,20 +934,37 @@ function createCharts() {
 
 
 
+
+
+
+
+
+
+
+
+    var groups = {}
+
+    terror_filtered.forEach(t => {
+        if (groups.hasOwnProperty(t.gname) == false) {
+            groups[t.gname] = { g: t.gname, count: 0 }
+        }
+        groups[t.gname].count += 1;
+    });
+
     tempData = []
-    tempData = Object.keys(countries).map(c => {
+    tempData = Object.keys(groups).map(c => {
         //thing = countries[c];
-        return countries[c];
+        return groups[c];
     })
 
     tempData.sort((a, b) => b.count - a.count)
-    tempData = tempData.slice(0, 25);
+    tempData = tempData.slice(1, 10);
 
     //console.log(tempData)
-    col1 = tempData.map(y => {
-        return y.country
+    var col1 = tempData.map(y => {
+        return y.g
     });
-    col2 = tempData.map(y => {
+    var col2 = tempData.map(y => {
         return y.count
     });
 
@@ -992,31 +974,77 @@ function createCharts() {
     //console.log(col1)
     //console.log(col2)
 
-    // let chart = c3.generate({
-    //     bindto: '#chart_group_attacks',
-    //     data: {
-    //         x: 'x',
-    //         labels: true,
-    //         columns: [
-    //             ['x', ...col1],
-    //             ['data2', ...col2]
-    //         ],
+    var chart = c3.generate({
+        bindto: '#chart_group_attacks',
+        data: {
+            x: 'x',
+            labels: true,
+            columns: [
+                ['x', ...col1],
+                ['data2', ...col2]
+            ],
 
-    //         type: 'bar'
-    //     },
-    //     axis: {
-    //         x: {
-    //             type: 'category',
-    //             tick: {
-    //                 rotate: 50,
-    //                 multiline: false
-    //             },
-    //         }
-    //     },
+            type: 'bar'
+        },
+        axis: {
+            x: {
+                type: 'category',
+                tick: {
+                    rotate: 50,
+                    multiline: false
+                },
+            }
+        },
 
+    });
+
+
+
+    // var countries = {}
+    // terror_filtered.forEach(t => {
+    //     const { iyear, country_txt } = t
+    //     if (country_txt == null || iyear == null) {
+    //         return;
+    //     }
+
+    //     if (countries.hasOwnProperty(country_txt) === false) {
+    //         countries[country_txt] = {}
+    //     }
+    //     let country = countries[country_txt]
+    //     x = iyear
+    //     if (country.hasOwnProperty(iyear) === false) {
+    //         country[x] = {year: x, count: 0}
+    //     }
+    //     country.count += 1;
     // });
 
+    // var col1 = Object.keys(countries).map(c => {
+    //     return c
+    // });
+    // console.log(col1)
 
+    // var col2 = Object.keys(countries).map(c => {
+    //     return c.count
+    // });
+
+    // var col3 = Object.keys(countries).map(c => {
+    //     return c.year
+    // });
+    // console.log(col2)
+    // console.log(col3)
+
+
+    // var chart = c3.generate({
+    //     bindto: '#chart_country__yearattacks',
+    //     data: {
+    //         x:'x',
+    //         columns: [
+    //             ['x', ...col3],
+    //             ['data2', ...col1],
+
+    //         ]
+    //     }
+    // });
 
 
 
@@ -1025,7 +1053,7 @@ function createCharts() {
 
 }
 
-function createBar1SVG() {
+function createBar1SVGNotUsed() {
 
     var data = [4, 8, 15, 16, 23, 42];
 
