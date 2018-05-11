@@ -9,13 +9,15 @@ let update_timeline_freq = 10;
 let terror_filtered = []
 let clusters = []
 
+const ZOOM_LEVELS = 6 // how many zoom levels after X should it use no clustering
 
 d3.csv("/data/terrorism.csv", function (error, data) {
     if (error) throw error;
-
     console.log("File load complete")
+
     console.time('loadData');
     loadData(data)
+    console.log("Pre-Processing complete")
 
     console.time('createCharts');
     createCharts();
@@ -285,25 +287,6 @@ function disableMap(disable) {
         : console.log("map not created");
 }
 
-
-$(function () {
-    $('input[name="rad"]').click(function () {
-        var $radio = $(this);
-
-        // if this was previously checked
-        if ($radio.data('waschecked') == true) {
-            $radio.prop('checked', false);
-            $radio.data('waschecked', false);
-        }
-        else
-            $radio.data('waschecked', true);
-
-        // remove was checked from other radios
-        $radio.siblings('input[name="rad"]').data('waschecked', false);
-    });
-});
-
-
 $(document).ready(() => {
 
     year_filter = $("#yearSlider").prop('min');
@@ -311,7 +294,6 @@ $(document).ready(() => {
     $(yearval).text($("#yearSlider").val());
 
     $("#yearSlider").change(e => {
-        year_filter = null;
         year_filter = e.target.value;
         $(yearval).text(year_filter);
 
@@ -391,6 +373,7 @@ $(document).ready(() => {
 
 })
 
+
 let timeline_iteration = 0;
 function myTimer() {
     if (isDrawn) {
@@ -407,14 +390,21 @@ function myTimer() {
         timeline_iteration++;
     }
 }
-//loop over terror x times
-//each loop store all the different filterings
 
 
+function zoomLevelToClusterLevel(zoomLevel) {
+    console.log("Zoom Level in:",zoomLevel)
+    const A = Math.pow(2, ZOOM_LEVELS)
+    const clusterLevel = Math.floor(A * Math.pow(0.5, zoomLevel))
+    console.log("Cluster level out:",clusterLevel)
+    return clusterLevel
+}
+
+//loop over terror data and filter, store each zoom cluster
 function loadData(terror) {
     //console.log(terror)
     terror_filtered = terror.filter(d => {
-        const { iyear, country, city, latitude, longitude } = d;
+        const { iyear, country, city, latitude, longitude, gname } = d;
         //data filtering 
         if (!latitude || !longitude || !iyear) {
             return false;
@@ -422,19 +412,56 @@ function loadData(terror) {
         return true;
     })
 
-
-    for (let clustersIndex = 1; clustersIndex <= 4096; clustersIndex *= 2) {
-        const modulo = clustersIndex / 180;
-
+    max_cluster = Math.pow(2,ZOOM_LEVELS-1)
+    clusters[0] = clusterRawData(terror_filtered, 0);
+    clusters[max_cluster] = clusterRawData(terror_filtered, Number.MAX_SAFE_INTEGER)
+    clusters[max_cluster*2] = clusterRawData(terror_filtered, Number.MAX_SAFE_INTEGER)
+    let zoom = ZOOM_LEVELS
+    for (let clustersIndex = 1; clustersIndex < max_cluster; clustersIndex*=2) {
+        const modulo = (zoomLevelToClusterLevel(zoom))
         const cluster = clusterRawData(terror_filtered, modulo)
-
         clusters[clustersIndex] = cluster
+        zoom--;
     }
 
+    const groups = {}
+    terror_filtered.forEach(t => {
+        if (groups.hasOwnProperty(t.gname) == false) {
+            groups[t.gname] = { g: t.gname, count: 0 }
+        }
+        groups[t.gname].count += 1;
+    });
+
+    let tempData = Object.keys(groups).map(c => {
+        return groups[c];
+    })
+    tempData.sort((a, b) => b.count - a.count)
+    tempData = tempData.slice(1,20)
+
+    const unique_groups = {}
+    //unique_groups = terror_filtered.filter( onlyUnique )
+    tempData.forEach(d => {
+        if(unique_groups.hasOwnProperty(d.g) == false) {
+            unique_groups[d.g] = {}
+        }
+    })
+
+    //$("#group_selection").val(Object.keys(unique_groups));
+
+    $.each(Object.keys(unique_groups), function(key, value) {   
+        $('#groups')
+            .append($("<option></option>")
+                       .attr("value",value)
+                       .text(value)); 
+
+    });
+    
     console.timeEnd('loadData')
     console.time('addMarkers')
     addMarkers();
     console.timeEnd('addMarkers')
+    console.log("Marker load complete")
+
     google.maps.event.addListener(map, 'bounds_changed', function () {
         //window.clearTimeout(bounds_check_freq);
         //bounds_check_freq = window.setTimeout(function () {
@@ -447,9 +474,14 @@ function loadData(terror) {
 function clusterRawData(input, modulo) {
     return input.reduce((clusters, point) => {
         const { latitude, longitude } = point;
+        if(modulo <= 0) {
+            cluster_latitude = latitude;
+            cluster_longitude = longitude;
+        } else {
+            cluster_latitude = latitude - latitude % modulo
+            cluster_longitude = longitude - longitude % modulo
+        }
 
-        const cluster_latitude = latitude - latitude % modulo
-        const cluster_longitude = longitude - longitude % modulo
 
         const cluster_index = cluster_latitude + "," + cluster_longitude
 
@@ -466,17 +498,23 @@ function clusterRawData(input, modulo) {
 
 let year_filter1 = undefined;
 let year_filter2 = undefined;
-taliban_filter = false;
-isis_filter = false;
+let user_select = false;
+let selection = []
 
 function filterButton() {
     year_filter1 = null;
     year_filter2 = null;
 
+    user_select = false;
+    selection = $('#groups').val();
+
     const year = parseInt($("#year_search").val());
     const year2 = parseInt($("#year_search2").val());
 
-    if (isNaN(year) && isNaN(year2)) {
+    if(selection.length >0) {
+        user_select = true;
+    }
+    else if (isNaN(year) && isNaN(year2)) {
         return;
     }
 
@@ -497,15 +535,6 @@ function filterButton() {
         is_play_btn = true;
     }
     addMarkers();
-}
-
-function zoomLevelToClusterLevel(zoomLevel) {
-    //console.log("Zoom Level in:",zoomLevel)
-    const ZOOM_LEVELS = 14
-    const A = Math.pow(2, ZOOM_LEVELS)
-    const clusterLevel = Math.floor(A * Math.pow(0.5, zoomLevel))
-    //console.log("Cluster level out:",clusterLevel)
-    return clusterLevel
 }
 
 function addMarkers() {
@@ -534,24 +563,11 @@ function addMarkers() {
 
     const camera_bounds = map.getBounds();
 
-    taliban_filter = false;
-    isis_filter = false;
-    if ($("#taliban_box").is(":checked")) {
-        taliban_filter = true;
-    }
-    else if ($("#isis_box").is(":checked")) {
-        isis_filter = true;
-    }
 
-    data = Object.keys(data)
-        .filter(latlng => {
-            const latlng_split = latlng.split(",")
-            const lat = latlng_split[0]
-            const lng = latlng_split[1]
-
-
-
-
+    //console.log(data)
+    data = Object.keys(data).filter(latlng => {
+            const lat = data[latlng][0].latitude
+            const lng = data[latlng][0].longitude
             let google_LatLng = new google.maps.LatLng(lat, lng);
             if (camera_bounds.contains(google_LatLng)) {
                 //console.log(lat,lng,"inbounds")
@@ -564,19 +580,19 @@ function addMarkers() {
             const cluster_points = data[key].filter(d => {
                 const { iyear, gname } = d
 
-                if (taliban_filter == true) {
-                    if (gname != "Taliban") {
-                        return false;
+                    if(user_select) {
+                        let found = false;
+                        for (s in selection) {
+                            if(selection[s] === gname) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found) {
+                            return false;
+                        }
                     }
-                }
-                if (isis_filter == true) {
-                    if (gname != "Islamic State of Iraq and the Levant (ISIL)") {
-                        return false;
-                    }
-                }
-
-
-
+                
                 if (year_filter1 != null &&
                     year_filter2 != null &&
                     year_filter1 <= iyear &&
@@ -611,7 +627,6 @@ function addMarkers() {
 
     data = data.map(d => ({ ...d, max }))
 
-    console.log("Marker load complete")
 
     //console.log(camera_bounds)
 

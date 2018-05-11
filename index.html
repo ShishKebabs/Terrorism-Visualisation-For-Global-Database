@@ -44,7 +44,7 @@
 		
 		<!-- Top Bar -->
 
-		<div class="top_bar">
+		<div class="top_bar"">
 			<div class="container">
 				<div class="row">
 					<div class="col top_bar_content d-flex flex-row align-items-center justify-content-start">
@@ -68,23 +68,21 @@
 			<div class="container">
 				<div class="row">
 					<div class="col">
-						<div class="header_content d-flex flex-row align-items-center justify-content-start">
-							<div id="year_slider" ">
+						<div style ="height: 200px;" class="header_content d-flex flex-row align-items-center justify-content-start">
+							<div id="year_slider">
                                 <!-- <button id="slowDown" type="button"> << </button>
                                 <button id="playPause" type="button">Play/Pause</button>
                                 <button id="fastForward" type="button"> >> </button> -->
-                                Timeline
-                                <input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
-                                
+                                Timeline:
+								<input id="yearSlider" type="range" style ="width:100%;"  min="1970" max = "2016" step = "1"/>
+								
+
                                 Year Range:
                                 <input type="search" id="year_search" placeholder="YYYY" value = "1970"/>
-                                <input type="search" id="year_search2" placeholder="YYYY" value = "2016"/>
-
-                                Taliban:
-                                <input id="taliban_box" type="radio"name="rad"></input>
-                                ISIS:
-                                <input id="isis_box" type="radio" name="rad"></input>
-                                <button class="button2" onclick="filterButton()">Filter</button>
+								<input type="search" id="year_search2" placeholder="YYYY" value = "2016"/>
+								Main Terror Groups:
+								<select id = "groups" multiple="multiple" size="5"></select>
+                                <button class="button2" onclick="filterButton()" style ="height: 50px; width: 150px;">Filter</button>
 
 
                                 <p>Current Year: <span id="yearval"></span></p>
@@ -194,7 +192,7 @@
 	<!-- Services -->
 
 	<div class="sermon">
-        <div class="sermon_background" style="background-image:url(images/terror_1.png)"></div>
+        <div class="sermon_background" style="background-image:url(images/terror_5.jpg)"></div>
         <div class="container">
             <div class="row">
                 <div class="col">
@@ -213,7 +211,7 @@
     </div>
 
     <div class="sermon">
-            <div class="sermon_background" style="background-image:url(images/terror_3.jpg)"></div>
+            <div class="sermon_background" style="background-image:url(images/terror_17.jpg)"></div>
             <div class="container">
                 <div class="row">
                     <div class="col">
@@ -277,7 +275,7 @@
 
 
             <div class="sermon">
-                    <div class="sermon_background" style="background-image:url(images/terror_3.jpg)"></div>
+                    <div class="sermon_background" style="background-image:url(images/terror_18.jpg)"></div>
                     <div class="container">
                         <div class="row">
                             <div class="col">
