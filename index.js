@@ -367,7 +367,10 @@ $(document).ready(() => {
             { "title": "Target Type", data: 'target1' },
             { "title": "Attack Type", data: 'attacktype1_txt' },
             { "title": "Group", data: 'gname' },
-            { "title": "Nationality", data: 'natlty1_txt' }
+            { "title": "Nationality", data: 'natlty1_txt' },
+            { "title": "Success?(1=yes)", data: 'success' },
+            { "title": "Suicide?(1=yes)", data: 'suicide' }
+
         ]
     });
 
@@ -526,12 +529,11 @@ function filterButton() {
         year_filter = year
         $("#yearSlider").val(year_filter);
         $(yearval).text(year_filter);
-    } else {
+    } else if (!isNaN(year) && !isNaN(year2)) {
         year_filter1 = year;
         year_filter2 = year2;
         $(yearval).text("Range");
         timeline_timer = clearInterval(timeline_timer);
-
         is_play_btn = true;
     }
     addMarkers();
